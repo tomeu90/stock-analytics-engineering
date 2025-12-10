@@ -1,1 +1,1 @@
-# fundamentals_analysis
+# stock_analytics
