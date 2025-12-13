@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: finviz
+    database: raw
+    schema: finviz
+    tables:
+      - name: screener_data
+      - name: news_data
+      - name: statements_data
