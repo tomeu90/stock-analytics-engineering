@@ -4,7 +4,614 @@ sources:
   - name: finviz
     database: raw
     schema: finviz
+
+    description: "Finviz source containing raw financial market data, company fundamentals, and news for a large number of publicly traded stocks."
+
+    loader: Finviz API
+    loaded_at_field: load_date
+
+    freshness:
+      warn_after:
+        count: 24
+        period: hour
+      error_after:
+        count: 48
+        period: hour
+
+    tags: [raw, finviz]
+
+    tests:
+      - dbt_utils.source_row_count:
+        min: 1
+
     tables:
       - name: screener_data
+        description: "Raw financial data and metrics for publicly traded companies, sourced from Finviz."
+    
+        loaded_at_field: load_date
+
+        freshness:
+          warn_after:
+            count: 24
+            period: hour
+
+        tags: [screener, financial, news]
+
+        columns:
+          - name: no
+            description: "Sequential row number from the Finviz screener results."
+            tests:
+              - not_null
+
+          - name: ticker
+            description: Stock ticker symbol identifying the publicly traded company."
+            tests:
+              - not_null
+
+          - name: company
+            description: "Full company name as listed on Finviz screener."
+            tests:
+              - not_null
+
+          - name: sector
+            description: "Economic sector classification assigned to the stock (e.g., Technology, Healthcare)."
+            tests:
+              - not_null
+
+          - name: industry
+            description: "Industry classification within the broader sector."
+            tests:
+              - not_null
+
+          - name: country
+            description: "Country where the company is headquartered or primarily operates."
+            tests:
+              - not_null
+
+          - name: market_cap
+            description: "Total market capitalization of the company, expressed in millions of USD. Equals the total value of all outstanding company's shares."
+            tests:
+              - not_null
+              - dbt_utils.expression_is_true:
+                expression: "market_cap >= 0"
+
+          - name: p_e
+            description: "Trailing price-to-earnings (P/E) valuation ratio based on earnings from the last twelve months (TTM). It compares the company's share price to its earnings per share."
+
+          - name: forward_p_e
+            description: "Forward-looking price-to-earnings (P/E) valuation ratio based on estimated future earnings for the next fiscal year. It compares the company's current share price to its next fiscal year estimated earnings per share."
+
+          - name: peg
+            description: "Price/Earnings-to-Growth (PEG) valuation ratio, incorporating expected earnings growth. It compares the company's share price to its expected earnings growth."
+
+          - name: p_s
+            description: "Price-to-sales (P/S) valuation ratio, comparing the company's market value to its revenue. It is calculated by dividing the current company's share price by the sales per share in dollars."
+
+          - name: p_b
+            description: "Price-to-book (P/B) ratio, comparing market value to book value of equity. It is calculated by dividing the current company's share price by the latest quarter's book value per share."
+
+          - name: p_cash
+            description: "Price-to-cash ratio, measuring market value relative to cash assets. It is calculated by dividing the current company's share price by the latest quarter's cash per share."
+
+          - name: p_free_cash_flow
+            description: "Price-to-free-cash-flow ratio, comparing market value to it's level of annual free cash flow."
+
+          - name: dividend_yield
+            description: "The dividend yield equals the annual dividend per share divided by the stock's price. This measurement tells what percentage return a company pays out to shareholders in the form of dividends. If there is no forward dividend estimate available, trailing twelve month (TTM) value is used."
+
+          - name: payout_ratio
+            description: "Dividend payout ratio, indicating the percentage of earnings paid out as dividends."
+
+          - name: eps_ttm
+            description: "Earnings per share (EPS) over the trailing twelve months (TTM)."
+
+          - name: eps_growth_this_year
+            description: "The portion of a company's profit allocated to each outstanding share of common stock. Expected or reported EPS growth rate for the current fiscal year, expressed as a percentage."
+
+          - name: eps_growth_next_year
+            description: "The portion of a company's profit allocated to each outstanding share of common stock. Expected EPS growth rate for the next fiscal year, expressed as a percentage."
+
+          - name: eps_growth_past_5_years
+            description: "Historical average annual EPS growth rate over the past five years, expressed as a percentage."
+
+          - name: eps_growth_next_5_years
+            description: "Projected average annual EPS growth rate over the next five years, expressed as a percentage."
+
+          - name: sales_growth_past_5_years
+            description: "Historical average annual sales growth rate over the past five years, expressed as a percentage."
+
+          - name: eps_growth_quarter_over_quarter
+            description: "Quarter-over-quarter EPS growth for the most recent period, expressed as a percentage."
+
+          - name: sales_growth_quarter_over_quarter
+            description: "Quarter-over-quarter sales growth for the most recent period, expressed as a percentage."
+
+          - name: shares_outstanding
+            description: "Total number of shares outstanding, issued by a corporation and held by its shareholders, as reported by Finviz. Expressed in millions."
+
+          - name: shares_float
+            description: "Number of shares available for public trading, excluding restricted and insider-held shares. Expressed in millions."
+
+          - name: insider_ownership
+            description: "Percentage of company shares owned by it's own management, such as executives and directors."
+
+          - name: insider_transactions
+            description: "Recent insider trading activity, indicating net buying or selling by company insiders. Value represents 6-month percentual change in total insider ownership."
+
+          - name: institutional_ownership
+            description: "Percentage of company shares owned by institutional investors."
+
+          - name: institutional_transactions
+            description: "Recent changes in institutional ownership, indicating net accumulation or distribution. Value represents 3-month percentual change in institutional ownership."
+
+          - name: short_float
+            description: "Percentage of the public float that is currently sold short."
+
+          - name: short_ratio
+            description: "Short interest ratio (days to cover), calculated as short interest divided by average daily trading volume."
+
+          - name: return_on_assets
+            description: "Return on assets (ROA), measuring profitability relative to total assets, expressed as a percentage. An indicator of how profitable a company is relative to its total assets. ROA gives an idea as to how efficient management is at using its assets to generate earnings. Calculated by dividing a company's annual earnings by its total assets, ROA is displayed as a percentage."
+
+          - name: return_on_equity
+            description: "Return on equity (ROE), measuring profitability relative to shareholders’ equity, expressed as a percentage. A measure of a corporation's profitability that reveals how much profit a company generates with the money shareholders have invested. Calculated as Net Income / Shareholder's Equity."
+
+          - name: return_on_invested_capital
+            description: "Return on invested capital (ROIC), measuring efficiency of capital allocation, expressed as a percentage. A financial metric used to measure a company's efficiency in allocating its capital to generate returns. It assesses how well a company is using its resources to create value for its investors. ROIC is particularly useful for evaluating a company's profitability and its ability to sustain competitive advantages over time. ROIC is calculated as Net Income / Invested Capital."
+
+          - name: current_ratio
+            description: "A liquidity ratio that measures a company's ability to pay short-term obligations. Calculated as Current Assets / Current Liabilities."
+
+          - name: quick_ratio
+            description: "An indicator of a company's short-term liquidity. The quick ratio measures a company's ability to meet its short-term obligations with its most liquid assets. The higher the quick ratio, the better the position of the company. Calculated as (Current Assets - Inventories) / Current Liabilities."
+
+          - name: lt_debt_equity
+            description: "Long-term debt-to-equity ratio, measuring long-term financial leverage. It's calculated by dividing its long term debt by stockholders' equity. It indicates what proportion of equity and long-term debt the company is using to finance its assets."
+
+          - name: total_debt_equity
+            description: "Total debt-to-equity ratio, measuring overall financial leverage including short- and long-term debt. A measure of a company's financial leverage calculated by dividing its liabilities by stockholders' equity. It indicates what proportion of equity and debt the company is using to finance its assets."
+
+          - name: gross_margin
+            description: "A company's total sales revenue minus its cost of goods sold, divided by the total sales revenue, expressed as a percentage. The gross margin represents the percent of total sales revenue that the company retains after incurring the direct costs associated with producing the goods and services sold by a company. The higher the percentage, the more the company retains on each dollar of sales to service its other costs and obligations."
+
+          - name: operating_margin
+            description: "Operating margin is a measurement of what proportion of a company's revenue is left over after paying for variable costs of production such as wages, raw materials, etc. A healthy operating margin is required for a company to be able to pay for its fixed costs, such as interest on debt. Calculated as Operating Income / Net Sales, expressed as a percentage."
+
+          - name: profit_margin
+            description: "A ratio of profitability calculated as net income divided by revenues, or net profits divided by sales. It measures how much out of every dollar of sales a company actually keeps in earnings, expressed as a percentage."
+
+          - name: performance_week
+            description: "Stock price performance over the past week, expressed as a percentage change."
+
+          - name: performance_month
+            description: "Stock price performance over the past month, expressed as a percentage change."
+
+          - name: performance_quarter
+            description: "Stock price performance over the past quarter, expressed as a percentage change."
+
+          - name: performance_half_year
+            description: "Stock price performance over the past six months, expressed as a percentage change."
+
+          - name: performance_year
+            description: "Stock price performance over the past year, expressed as a percentage change."
+
+          - name: performance_ytd
+            description: "Stock price performance year-to-date (YTD), expressed as a percentage change."
+
+          - name: beta
+            description: "Beta coefficient measuring the stock's volatility relative to the overall market. An asset with a beta of 0 means that its price is not at all correlated with the market. A positive beta means that the asset generally follows the market. A negative beta shows that the asset inversely follows the market, decreases in value if the market goes up."
+
+          - name: average_true_range
+            description: "Average True Range (ATR), a technical indicator measuring market volatility. The Average True Range is an exponential moving average (14-days) of the True Ranges. The range of a day's trading is high-low, True Range extends it to yesterday's closing price if it was outside of today's range: True Range = max(high, closeprev) - min(low, closeprev)."
+
+          - name: volatility_week
+            description: "Weekly stock price volatility, a statistical measure of the dispersion of returns for a given stock. Represents average weekly high/low trading range. Calculated as the standard deviation of weekly returns and expressed as a percentage, it shows the typical weekly price change (up or down)."
+
+          - name: volatility_month
+            description: "Monthly stock price volatility, a statistical measure of the dispersion of returns for a given stock. Represents average monthly high/low trading range. Calculated as the standard deviation of monthly returns and expressed as a percentage, it shows the typical monthly price change (up or down)."
+
+          - name: 20_day_simple_moving_average
+            description: "Percentage difference between the current stock price and its 20-day simple moving average."
+
+          - name: 50_day_simple_moving_average
+            description: "Percentage difference between the current stock price and its 50-day simple moving average."
+
+          - name: 200_day_simple_moving_average
+            description: "Percentage difference between the current stock price and its 200-day simple moving average."
+
+          - name: 50_day_high
+            description: "Percentage difference between the current stock price and its 50-day high."
+
+          - name: 50_day_low
+            description: "Percentage difference between the current stock price and its 50-day low."
+
+          - name: 52_week_high
+            description: "Percentage difference between the current stock price and its 52-week high."
+
+          - name: 52_week_low
+            description: "Percentage difference between the current stock price and its 52-week low."
+
+          - name: relative_strength_index_14
+            description: "14-day Relative Strength Index (RSI), a momentum oscillator measuring the speed and magnitude of price movements. The Relative Strength Index (RSI) is a technical analysis oscillator showing price strength by comparing upward and downward close-to-close movements."
+
+          - name: change_from_open
+            description: "Percentage change between the current stock price and the market open price."
+
+          - name: gap
+            description: "Percentage price gap between the previous trading day's close and the current day's open."
+
+          - name: analyst_recom
+            description: "Consensus analyst recommendation score, typically ranging from strong buy (1) to strong sell (5)."
+
+          - name: average_volume
+            description: "Average daily number of shares traded volume during the day, as reported by Finviz."
+
+          - name: relative_volume
+            description: "Current trading volume relative to the stock's 3-month average trading volume, intraday adjusted."
+
+          - name: price
+            description: "Current stock price at the time of data extraction."
+
+          - name: change
+            description: "Percentage change in stock price from the previous trading session's close."
+
+          - name: earnings_date
+            description: "Next scheduled earnings announcement date at the time of data extraction."
+
+          - name: target_price
+            description: "Consensus analyst mean target price for the stock."
+
+          - name: ipo_date
+            description: "Date when the company first became publicly traded through an initial public offering (IPO)."
+
+          - name: after_hours_close
+            description: "Stock price at the close of after-hours trading."
+
+          - name: after_hours_change
+            description: "Percentage change in stock price during after-hours trading. The difference between the regular close price and the after-hours price"
+
+          - name: book_sh
+            description: "Book value per share."
+
+          - name: cash_sh
+            description: "Cash and cash equivalents per share."
+
+          - name: dividend
+            description: "Annual dividend paid per share."
+
+          - name: employees
+            description: "Total number of employees reported by the company."
+
+          - name: eps_next_q
+            description: "Estimated earnings per share (EPS) for the next fiscal quarter."
+
+          - name: income
+            description: "Net income reported by the company, expressed in millions of dollars."
+
+          - name: index
+            description: "Major market indexes in which the stock is included (e.g., S&P 500, NASDAQ 100)."
+
+          - name: optionable
+            description: "Indicates whether the stock has listed options available for trading."
+
+          - name: prev_close
+            description: "Stock price at the close of the previous trading session."
+
+          - name: sales
+            description: "Total sales reported by the company."
+
+          - name: shortable
+            description: "Indicates whether shares are currently available to be sold short."
+
+          - name: short_interest
+            description: "Total number of shares that are currently sold short. Short Interest = Shares sold short / Shares available for trading (float). A high short interest indicates that many investors are bearish about the stock price."
+
+          - name: float_pct
+            description: "Percentage of total shares outstanding that are part of the public float for trading."
+
+          - name: open
+            description: "Stock price at market open for the   trading session."
+
+          - name: high
+            description: "Highest stock price reached during the current trading session."
+
+          - name: low
+            description: "Lowest stock price reached during the current trading session."
+
+          - name: trades
+            description: "Total number of executed trades during the trading session."
+
+          - name: performance_1_minute
+            description: "Stock price performance over the last 1 minute, expressed as a percentage change."
+
+          - name: performance_2_minutes
+            description: "Stock price performance over the last 2 minutes, expressed as a percentage change."
+
+          - name: performance_3_minutes
+            description: "Stock price performance over the last 3 minutes, expressed as a percentage change."
+
+          - name: performance_5_minutes
+            description: "Stock price performance over the last 5 minutes, expressed as a percentage change."
+
+          - name: performance_10_minutes
+            description: "Stock price performance over the last 10 minutes, expressed as a percentage change."
+
+          - name: performance_15_minutes
+            description: "Stock price performance over the last 15 minutes, expressed as a percentage change."
+
+          - name: performance_30_minutes
+            description: "Stock price performance over the last 30 minutes, expressed as a percentage change."
+
+          - name: performance_1_hour
+            description: "Stock price performance over the last hour, expressed as a percentage change."
+
+          - name: performance_2_hours
+            description: "Stock price performance over the last 2 hours, expressed as a percentage change."
+
+          - name: performance_4_hours
+            description: "Stock price performance over the last 4 hours, expressed as a percentage change."
+
+          - name: asset_type
+            description: "The type of financial asset (e.g., equity, ETF), as defined by the data source."
+
+          - name: etf_type
+            description: "The ETF structure or strategy type, as defined by the data source. A simple, broad categorization of each ETF based on its asset class and geographical exposure."
+
+          - name: region
+            description: "Targeted exposure to a specific type of geography-based grouping of the ETF."
+
+          - name: single_category
+            description: "Single category identifying the ETF's primary investment category."
+
+          - name: sector_theme
+            description: "Targeted exposure to a sector or thematic investment of the ETF's."
+
+          - name: tags
+            description: "Identifiers encoding descriptive tags or attributes associated with the ETF."
+
+          - name: active_passive
+            description: "Indicator specifying whether the ETF is actively or passively managed."
+
+          - name: net_expense_ratio
+            description: "Gross expense net of fee waivers, as a percentage of net assets as published by the ETF Issuer."
+
+          - name: total_holdings
+            description: "Total number of individual securities held by the ETF."
+
+          - name: assets_under_management
+            description: "Total assets under management (AUM) for the ETF."
+
+          - name: net_asset_value
+            description: "Net asset value (NAV) per share of the ETF."
+
+          - name: net_asset_value_pct
+            description: "Percentage change in net asset value (NAV) over the reporting period."
+
+          - name: net_flows_1_month
+            description: "Net capital inflows or outflows for the ETF over the past one month."
+
+          - name: net_flows_pct_1_month
+            description: "Net capital flows over the past one month expressed as a percentage of assets under management."
+
+          - name: net_flows_3_month
+            description: "Net capital inflows or outflows for the ETF over the past three months."
+
+          - name: net_flows_pct_3_month
+            description: "Net capital flows over the past three months expressed as a percentage of assets under management."
+
+          - name: net_flows_ytd
+            description: "Net capital inflows or outflows for the ETF year-to-date (YTD)."
+
+          - name: net_flows_pct_ytd
+            description: "Net capital flows year-to-date expressed as a percentage of assets under management."
+
+          - name: net_flows_1_year
+            description: "Net capital inflows or outflows for the ETF over the past one year."
+
+          - name: net_flows_pct_1_year
+            description: "Net capital flows over the past one year expressed as a percentage of assets under management."
+
+          - name: return_1_year
+            description: "Total return of the ETF over the past one year, expressed as a percentage."
+
+          - name: return_3_year
+            description: "Total return of the ETF over the past three years, expressed as a percentage."
+
+          - name: return_5_year
+            description: "Total return of the ETF over the past five years, expressed as a percentage."
+
+          - name: return_10_year
+            description: "Total return of the ETF over the past ten years, expressed as a percentage."
+
+          - name: return_since_inception
+            description: "Total return since the ETF's inception, expressed as a percentage."
+
+          - name: all_time_high
+            description: "Percentage difference between the current stock price and its all-time high."
+
+          - name: all_time_low
+            description: "Percentage difference between the current stock price and its all-time low."
+
+          - name: eps_surprise
+            description: "Percentage difference between reported earnings per share (EPS) and analyst expectations."
+
+          - name: revenue_surprise
+            description: "Percentage difference between reported revenue and analyst expectations."
+
+          - name: exchange
+            description: "Stock exchange on which the company's shares are primarily listed."
+
+          - name: dividend_ttm
+            description: "Total dividends paid per share over the trailing twelve months (TTM)."
+
+          - name: dividend_ex_date
+            description: "Ex-dividend date, after which a buyer is not entitled to receive the upcoming dividend for the current fiscal period."
+
+          - name: eps_year_over_year_ttm
+            description: "Year-over-year EPS growth over the trailing twelve months (TTM), expressed as a percentage."
+
+          - name: sales_year_over_year_ttm
+            description: "Year-over-year sales growth over the trailing twelve months (TTM), expressed as a percentage."
+
+          - name: 52_week_range
+            description: "Range between the stock's 52-week low and 52-week high prices."
+
+          - name: news_time
+            description: "Timestamp indicating when the related news item was published."
+
+          - name: news_url
+            description: "URL linking to the full news article related to the stock."
+
+          - name: news_title
+            description: "Headline or title of the related news article."
+
+          - name: performance_3_years
+            description: "Stock price performance over the past three years, expressed as a percentage change."
+
+          - name: performance_5_years
+            description: "Stock price performance over the past five years, expressed as a percentage change."
+
+          - name: performance_10_years
+            description: "Stock price performance over the past ten years, expressed as a percentage change."
+
+          - name: after_hours_volume
+            description: "Total number of shares executed during after-hours trading."
+
+          - name: eps_growth_past_3_years
+            description: "Historical average annual EPS growth rate over the past three years, expressed as a percentage."
+
+          - name: sales_growth_past_3_years
+            description: "Historical average annual sales growth rate over the past three years, expressed as a percentage."
+
+          - name: enterprise_value
+            description: "Enterprise value (EV), representing total company value including market capitalization, debt, and cash."
+
+          - name: ev_ebitda
+            description: "Enterprise value to EBITDA (EV/EBITDA) ratio, a valuation multiple comparing firm value to operating earnings. Total value of a company, including debt and excluding cash divided by Earnings Before Interest, Taxes, Depreciation, and Amortization (ttm)."
+
+          - name: ev_sales
+            description: "Enterprise value to sales (EV/Sales) ratio, comparing firm value to total revenue. Total value of a company, including debt and excluding cash divided by Revenue (ttm)."
+
+          - name: dividend_growth_1_year
+            description: "Dividend growth rate over the past one year, expressed as a percentage."
+
+          - name: dividend_growth_3_years
+            description: "Average annual dividend growth rate over the past three years, expressed as a percentage."
+
+          - name: dividend_growth_5_years
+            description: "Average annual dividend growth rate over the past five years, expressed as a percentage."
+
+          - name: load_date
+            description: "Date indicating when the record was ingested into the raw source."
+            tests:
+              - not_null
+
+          - name: volume
+            description: "Total number of shares volume during the current trading session."
+
       - name: news_data
+        description: "Raw news and blog articles related to market and publicly traded companies, sourced from Finviz."
+    
+        loaded_at_field: load_date
+
+        freshness:
+          warn_after:
+            count: 24
+            period: hour
+
+        tags: [market, news]
+
+        columns:
+          - name: title
+            description: "Headline or title of the news/blog article."
+            tests:
+              - not_null
+
+          - name: source
+            description: "Publisher or website name where the article originated."
+            tests:
+              - not_null
+
+          - name: date
+            description: "Original publication timestamp of the article."
+            tests:
+              - not_null
+
+          - name: url
+            description: "Canonical URL linking to the full news article."
+            tests:
+              - not_null
+              - unique
+
+          - name: category
+            description: "Type of content, indicating whether the article is a blog post or market-related news."
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["Blog", "Market"]
+
+          - name: load_date
+            description: "Date indicating when the record was ingested into the raw source."
+            tests:
+              - not_null
+
       - name: statements_data
+        description: "Raw financial statements of publicly traded companies, sourced from Finviz."
+    
+        loaded_at_field: load_date
+
+        freshness:
+          warn_after:
+            count: 24
+            period: hour
+
+        tags: [statements, financial]
+
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - ticker
+                - statement
+                - timeframe
+                - period
+                - line_item
+
+        columns:
+          - name: load_date
+            description: "Date indicating when the record was ingested into the raw source."
+            tests:
+              - not_null
+
+          - name: ticker
+            description: "Stock ticker symbol identifying the publicly traded company."
+            tests:
+              - not_null
+
+          - name: period
+            description: "Reporting period associated with the financial statement (e.g. 2023FY, 2024Q2)."
+            tests:
+              - not_null
+
+          - name: statement
+            description: "Type of financial statement the data originates from."
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["Income Statement", "Balance Sheet", "Cash Flow"]
+
+          - name: timeframe
+            description: "Time aggregation of the financial data, such as annual or quarterly."
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["Annual", "Quarterly"]
+
+          - name: line_item
+            description: "Name of the financial statement line item (e.g. Revenue, Net Income, Total Assets)."
+            tests:
+              - not_null
+
+          - name: value
+            description: "Reported numeric value for the specified line item, period, and timeframe."
+            tests:
+              - not_null
