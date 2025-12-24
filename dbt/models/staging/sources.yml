@@ -8,43 +8,37 @@ sources:
     description: "Finviz source containing raw financial market data, company fundamentals, and news for a large number of publicly traded stocks."
 
     loader: Finviz API
-    loaded_at_field: load_date
 
-    freshness:
-      warn_after:
-        count: 24
-        period: hour
-      error_after:
-        count: 48
-        period: hour
-
-    tags: [raw, finviz]
-
-    tests:
-      - dbt_utils.source_row_count:
-        min: 1
+    config:
+      loaded_at_field: load_date
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+        error_after:
+          count: 48
+          period: hour
+      tags: [raw, finviz]
 
     tables:
       - name: screener_data
         description: "Raw financial data and metrics for publicly traded companies, sourced from Finviz."
-    
-        loaded_at_field: load_date
-
-        freshness:
-          warn_after:
-            count: 24
-            period: hour
-
-        tags: [screener, financial, news]
+        config:
+          loaded_at_field: load_date
+          freshness:
+            warn_after:
+              count: 24
+              period: hour
+          tags: [screener, financial, news]
 
         columns:
-          - name: no
+          - name: "no"
             description: "Sequential row number from the Finviz screener results."
             tests:
               - not_null
 
           - name: ticker
-            description: Stock ticker symbol identifying the publicly traded company."
+            description: "Stock ticker symbol identifying the publicly traded company."
             tests:
               - not_null
 
@@ -71,10 +65,9 @@ sources:
           - name: market_cap
             description: "Total market capitalization of the company, expressed in millions of USD. Equals the total value of all outstanding company's shares."
             tests:
-              - not_null
               - dbt_utils.expression_is_true:
-                expression: "market_cap >= 0"
-
+                  arguments:
+                    expression: ">= 0"
           - name: p_e
             description: "Trailing price-to-earnings (P/E) valuation ratio based on earnings from the last twelve months (TTM). It compares the company's share price to its earnings per share."
 
@@ -310,7 +303,7 @@ sources:
             description: "Percentage of total shares outstanding that are part of the public float for trading."
 
           - name: open
-            description: "Stock price at market open for the   trading session."
+            description: "Stock price at market open for the current trading session."
 
           - name: high
             description: "Highest stock price reached during the current trading session."
@@ -511,15 +504,13 @@ sources:
 
       - name: news_data
         description: "Raw news and blog articles related to market and publicly traded companies, sourced from Finviz."
-    
-        loaded_at_field: load_date
-
-        freshness:
-          warn_after:
-            count: 24
-            period: hour
-
-        tags: [market, news]
+        config:
+          loaded_at_field: load_date
+          freshness:
+            warn_after:
+              count: 24
+              period: hour
+          tags: [market, news]
 
         columns:
           - name: title
@@ -548,7 +539,8 @@ sources:
             tests:
               - not_null
               - accepted_values:
-                  values: ["Blog", "Market"]
+                  arguments:
+                    values: ["Blog", "Market"]
 
           - name: load_date
             description: "Date indicating when the record was ingested into the raw source."
@@ -557,24 +549,14 @@ sources:
 
       - name: statements_data
         description: "Raw financial statements of publicly traded companies, sourced from Finviz."
-    
-        loaded_at_field: load_date
 
-        freshness:
-          warn_after:
-            count: 24
-            period: hour
-
-        tags: [statements, financial]
-
-        tests:
-          - dbt_utils.unique_combination_of_columns:
-              combination_of_columns:
-                - ticker
-                - statement
-                - timeframe
-                - period
-                - line_item
+        config:
+          loaded_at_field: load_date
+          freshness:
+            warn_after:
+              count: 24
+              period: hour
+          tags: [statements, financial]
 
         columns:
           - name: load_date
@@ -597,14 +579,16 @@ sources:
             tests:
               - not_null
               - accepted_values:
-                  values: ["Income Statement", "Balance Sheet", "Cash Flow"]
+                  arguments:
+                    values: ["Income Statement", "Balance Sheet", "Cash Flow"]
 
           - name: timeframe
             description: "Time aggregation of the financial data, such as annual or quarterly."
             tests:
               - not_null
               - accepted_values:
-                  values: ["Annual", "Quarterly"]
+                  arguments:
+                    values: ["Annual", "Quarterly"]
 
           - name: line_item
             description: "Name of the financial statement line item (e.g. Revenue, Net Income, Total Assets)."

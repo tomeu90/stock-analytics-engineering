@@ -1,0 +1,776 @@
+version: 2
+
+models:
+
+  - name: stg_finviz__market_news
+    description: "Staging model containing market news articles and economics blogs aggregated by Finviz, with links pointing to external source websites, including titles, publication timestamps, and audit metadata."
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [market, blog, news]
+
+    columns:
+      - name: desc_news_title
+        data_type: string
+        description: "Title of the news post."
+        tests:
+          - not_null
+
+      - name: desc_news_source
+        data_type: string
+        description: "Source or publisher of the article content."
+        tests:
+          - not_null
+
+      - name: dt_news_posting
+        data_type: timestamp
+        description: "Timestamp indicating when the news post was published."
+        tests:
+          - not_null
+
+      - name: desc_news_url
+        data_type: string
+        description: "Canonical URL linking to the news article."
+        tests:
+          - not_null
+
+      - name: desc_news_category
+        data_type: string
+        description: "Specifies the type of article, such as 'Blog' or 'Market' news related."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Blog'
+                  - 'Market'
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "Timestamp indicating when the record was created."
+        tests:
+          - not_null
+
+  - name: stg_finviz__financial_statements
+    description: "Staging model containing normalized financial statement line items sourced from Finviz, across multiple reporting periods and timeframes."
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [financial, statements]
+
+    columns:
+      - name: desc_ticker
+        data_type: string
+        description: "Stock ticker symbol identifying the publicly traded company."
+        tests:
+          - not_null
+
+      - name: dt_year
+        data_type: int
+        description: "Fiscal year associated with the financial statement data."
+        tests:
+          - not_null
+
+      - name: dt_period
+        data_type: string
+        description: "Fiscal reporting period within the year (e.g. Q1, Q2, Q3, Q4, FY)."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                  values: ["Q1", "Q2", "Q3", "Q4", "FY"]
+
+      - name: dt_timeframe
+        data_type: string
+        description: "Timeframe of the financial data, such as annual or quarterly."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                  values: ["Quarterly", "Annual"]
+
+      - name: desc_financial_statement
+        data_type: string
+        description: "Type of financial statement the line item belongs to (e.g. income statement, balance sheet, cash flow statement)."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                  values: ["Income Statement", "Balance Sheet", "Cash Flow"]
+
+      - name: desc_line_item
+        data_type: string
+        description: "Name of the financial statement line item (e.g. Revenue, Net Income, Total Assets)."
+        tests:
+          - not_null
+
+      - name: mnt_line_item_value
+        data_type: string
+        description: "Reported value for the financial statement line item, as provided by the source."
+        tests:
+          - not_null
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "Timestamp indicating when the record was created."
+        tests:
+          - not_null
+
+  - name: stg_finviz__asset_attributes
+    description: "Staging model containing company-level asset attributes sourced from Finviz, including identity and classification data, technical indicators, valuation and fundamental metrics, price performance statistics, dividend information, news-related signals, and ownership characteristics."
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [asset, identity, prices, valuation, ownership, dividends, fundamentals, technicals, growth, performance, news]
+
+    columns:
+      - name: desc_ticker
+        data_type: string
+        description: "Stock ticker symbol identifying the publicly traded company."
+        tests:
+          - not_null
+
+      - name: desc_company
+        data_type: string
+        description: "Full company name as listed on Finviz screener."
+        tests:
+          - not_null
+
+      - name: desc_sector
+        data_type: string
+        description: "Economic sector classification assigned to the stock (e.g., Technology, Healthcare)."
+        tests:
+          - not_null
+
+      - name: desc_industry
+        data_type: string
+        description: "Industry classification within the broader sector."
+        tests:
+          - not_null
+
+      - name: desc_country
+        data_type: string
+        description: "Country where the company is headquartered or primarily operates."
+        tests:
+          - not_null
+
+      - name: desc_exchange
+        data_type: string
+        description: "Stock exchange on which the company's shares are primarily listed."
+        tests:
+          - not_null
+
+      - name: desc_index
+        data_type: string
+        description: "Major market indexes in which the stock is included (e.g., S&P 500, NASDAQ 100)."
+        tests:
+          - not_null
+
+      - name: mnt_previous_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at the close of the previous trading session."
+        tests:
+          - not_null
+
+      - name: pct_price_gap
+        description: "Rate price gap between the previous trading day's close and the current day's open."
+        data_type: decimal(10,4)
+        tests:
+          - not_null
+
+      - name: mnt_open_price
+        data_type: decimal(10,2)
+        description: "Stock price at market open for the current trading session."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= mnt_high_price AND mnt_low_price <= mnt_open_price"
+
+      - name: mnt_high_price
+        data_type: decimal(10,2)
+        description: "Highest stock price reached during the current trading session."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= mnt_low_price"
+
+      - name: mnt_low_price
+        data_type: decimal(10,2)
+        description: "Lowest stock price reached during the current trading session."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= mnt_close_price"
+
+      - name: mnt_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at market close for the current trading session."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= mnt_high_price"
+
+      - name: mnt_after_hours_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at the close of after-hours trading."
+
+      - name: qty_trades
+        data_type: integer
+        description: "Total number of executed trades during the trading session."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: qty_volume
+        data_type: integer
+        description: "Total number of shares volume during the current trading session."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: qty_average_volume
+        data_type: integer
+        description: "Average daily number of shares traded volume during the day, as reported by Finviz."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: rt_relative_volume_ratio
+        data_type: double
+        description: "Rate that expresses the current trading volume relative to the stock's 3-month average trading volume, intraday adjusted."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: qty_after_hours_volume
+        data_type: integer
+        description: "Total number of shares executed during after-hours trading."
+
+      - name: pct_price_change
+        data_type: decimal(10,4)      
+        description: "Rate change in stock price from the previous trading session's close."
+        tests:
+          - not_null
+
+      - name: pct_price_change_from_open
+        data_type: decimal(10,4)  
+        description: "Rate change between the current stock price and the market open price."
+        tests:
+          - not_null
+
+      - name: pct_after_hours_price_change
+        data_type: decimal(10,4)  
+        description: "Rate change in stock price during after-hours trading. The difference between the regular close price and the after-hours price"
+
+      - name: mnt_52_week_low_price
+        data_type: decimal(10,2)  
+        description: "The stock's 52-week lowest price."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= mnt_low_price"
+
+      - name: mnt_52_week_high_price
+        data_type: decimal(10,2)  
+        description: "The stock's 52-week highest price."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= mnt_high_price"
+
+      - name: mnt_market_capitalization
+        data_type: double
+        description: "Total market capitalization of the company, expressed in USD. Equals the total value of all outstanding company's shares."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: rt_price_earnings_ratio
+        data_type: double
+        description: "Trailing price-to-earnings (P/E) valuation ratio based on earnings from the last twelve months (TTM). It compares the company's share price to its earnings per share."
+
+      - name: rt_forward_price_earnings_ratio
+        data_type: double
+        description: "Forward-looking price-to-earnings (P/E) valuation ratio based on estimated future earnings for the next fiscal year. It compares the company's current share price to its next fiscal year estimated earnings per share."
+
+      - name: rt_price_earnings_growth_ratio
+        data_type: double
+        description: "Price/Earnings-to-Growth (PEG) valuation ratio, incorporating expected earnings growth. It compares the company's share price to its expected earnings growth."
+
+      - name: rt_price_sales_ratio
+        data_type: double
+        description: "Price-to-sales (P/S) valuation ratio, comparing the company's market value to its revenue. It is calculated by dividing the current company's share price by the sales per share in dollars."
+
+      - name: rt_price_book_ratio
+        data_type: double
+        description: "Price-to-book (P/B) ratio, comparing market value to book value of equity. It is calculated by dividing the current company's share price by the latest quarter's book value per share."
+
+      - name: rt_price_cash_ratio
+        data_type: double
+        description: "Price-to-cash ratio, measuring market value relative to cash assets. It is calculated by dividing the current company's share price by the latest quarter's cash per share."
+
+      - name: rt_price_free_cash_flow_ratio
+        data_type: double
+        description: "Price-to-free-cash-flow ratio, comparing market value to it's level of annual free cash flow."
+
+      - name: rt_book_shares
+        data_type: double
+        description: "Book value per share."
+
+      - name: mnt_enterprise_value
+        data_type: double
+        description: "Enterprise value (EV), representing total company value including market capitalization, debt, and cash."
+
+      - name: rt_enterprise_value_ebitda_ratio
+        data_type: double
+        description: "Enterprise value to EBITDA (EV/EBITDA) ratio, a valuation multiple comparing firm value to operating earnings. Total value of a company, including debt and excluding cash divided by Earnings Before Interest, Taxes, Depreciation, and Amortization (ttm)."
+
+      - name: rt_enterprise_value_sales_ratio
+        data_type: double
+        description: "Enterprise value to sales (EV/Sales) ratio, comparing firm value to total revenue. Total value of a company, including debt and excluding cash divided by Revenue (ttm)."
+
+      - name: cod_analyst_recommendation
+        data_type: double
+        description: "Consensus analyst recommendation score, typically ranging from strong buy (1) to strong sell (5)."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between 1 and 5"
+
+      - name: mnt_target_price
+        data_type: decimal(10,2)
+        description: "Consensus analyst mean target price for the stock."
+
+      - name: qty_outstanding_shares
+        data_type: double
+        description: "Total number of shares outstanding, issued by a corporation and held by its shareholders, as reported by Finviz. Expressed in millions."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "> 0"
+
+      - name: qty_float_shares
+        data_type: double
+        description: "Number of shares available for public trading, excluding restricted and insider-held shares. Expressed in millions."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "> 0 AND qty_outstanding_shares >= qty_float_shares"
+
+      - name: pct_float_shares
+        data_type: double
+        description: "Rate of total shares outstanding that are part of the public float for trading."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between 0 and 1"
+
+      - name: pct_insider_ownership
+        data_type: double
+        description: "Rate of company shares owned by it's own management, such as executives and directors."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= qty_outstanding_shares"
+
+      - name: pct_insider_transactions
+        data_type: double
+        description: "Recent insider trading activity, indicating net buying or selling by company insiders. Value represents 6-month rate change in total insider ownership."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: pct_institutional_ownership
+        data_type: double
+        description: "Rate of company shares owned by institutional investors."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= qty_outstanding_shares"
+
+      - name: pct_institutional_transactions
+        data_type: double
+        description: "Recent changes in institutional ownership, indicating net accumulation or distribution. Value represents 3-month rate change in institutional ownership."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: flag_shortable_asset
+        data_type: boolean
+        description: "Indicates whether shares are currently available to be sold short."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                  values: ["True", "False"]
+
+      - name: pct_short_interest_rate
+        data_type: double
+        description: "Total number of shares that are currently sold short. Short Interest = Shares sold short / Shares available for trading (float). A high short interest indicates that many investors are bearish about the stock price."
+        tests:
+          - not_null
+
+      - name: pct_short_float_shares
+        data_type: double
+        description: "Rate of the public float that is currently sold short."
+        tests:
+          - not_null
+
+      - name: rt_short_ratio
+        data_type: double
+        description: "Short interest ratio (days to cover), calculated as short interest divided by average daily trading volume."
+        tests:
+          - not_null
+
+      - name: flag_optionable_asset
+        data_type: boolean
+        description: "Indicates whether the stock has listed options available for trading."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                  values: ["True", "False"]
+
+      - name: mnt_annual_dividend_per_share
+        data_type: double
+        description: "Annual dividend paid per share."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: mnt_dividend_per_share_trail_twelve_months
+        data_type: double
+        description: "Total dividends paid per share over the trailing twelve months (TTM)."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: dt_dividend_excluding_date
+        data_type: timestamp
+        description: "Ex-dividend date, after which a buyer is not entitled to receive the upcoming dividend for the current fiscal period."
+
+      - name: pct_dividend_yield
+        data_type: double
+        description: "The dividend yield equals the annual dividend per share divided by the stock's price. This measurement tells what percentage return a company pays out to shareholders in the form of dividends. If there is no forward dividend estimate available, trailing twelve month (TTM) value is used."
+
+      - name: pct_payout_ratio
+        data_type: double
+        description: "Dividend payout ratio, indicating the percentage of earnings paid out as dividends."
+
+      - name: pct_return_on_assets
+        data_type: double
+        description: "Return on assets (ROA), measuring profitability relative to total assets, expressed as a rate. An indicator of how profitable a company is relative to its total assets. ROA gives an idea as to how efficient management is at using its assets to generate earnings. Calculated by dividing a company's annual earnings by its total assets, ROA is displayed as a percentage."
+
+      - name: pct_return_on_equity
+        data_type: double
+        description: "Return on equity (ROE), measuring profitability relative to shareholders’ equity, expressed as a rate. A measure of a corporation's profitability that reveals how much profit a company generates with the money shareholders have invested. Calculated as Net Income / Shareholder's Equity."
+
+      - name: pct_return_on_invested_capital
+        data_type: double
+        description: "Return on invested capital (ROIC), measuring efficiency of capital allocation, expressed as a rate. A financial metric used to measure a company's efficiency in allocating its capital to generate returns. It assesses how well a company is using its resources to create value for its investors. ROIC is particularly useful for evaluating a company's profitability and its ability to sustain competitive advantages over time. ROIC is calculated as Net Income / Invested Capital."
+
+      - name: rt_current_ratio
+        data_type: double
+        description: "A liquidity ratio that measures a company's ability to pay short-term obligations. Calculated as Current Assets / Current Liabilities."
+
+      - name: rt_quick_ratio
+        data_type: double
+        description: "An indicator of a company's short-term liquidity. The quick ratio measures a company's ability to meet its short-term obligations with its most liquid assets. The higher the quick ratio, the better the position of the company. Calculated as (Current Assets - Inventories) / Current Liabilities."
+
+      - name: rt_long_term_debt_equity_ratio
+        data_type: double
+        description: "Long-term debt-to-equity ratio, measuring long-term financial leverage. It's calculated by dividing its long term debt by stockholders' equity. It indicates what proportion of equity and long-term debt the company is using to finance its assets."
+
+      - name: rt_total_debt_equity_ratio
+        data_type: double
+        description: "Total debt-to-equity ratio, measuring overall financial leverage including short- and long-term debt. A measure of a company's financial leverage calculated by dividing its liabilities by stockholders' equity. It indicates what proportion of equity and debt the company is using to finance its assets."
+
+      - name: pct_gross_margin
+        data_type: double
+        description: "A company's total sales revenue minus its cost of goods sold, divided by the total sales revenue, expressed as a rate. The gross margin represents the percent of total sales revenue that the company retains after incurring the direct costs associated with producing the goods and services sold by a company. The higher the percentage, the more the company retains on each dollar of sales to service its other costs and obligations."
+
+      - name: pct_operating_margin
+        data_type: double
+        description: "Operating margin is a measurement of what proportion of a company's revenue is left over after paying for variable costs of production such as wages, raw materials, etc. A healthy operating margin is required for a company to be able to pay for its fixed costs, such as interest on debt. Calculated as Operating Income / Net Sales, expressed as a rate."
+
+      - name: pct_profit_margin
+        data_type: double
+        description: "A ratio of profitability calculated as net income divided by revenues, or net profits divided by sales. It measures how much out of every dollar of sales a company actually keeps in earnings, expressed as a rate."
+
+      - name: mnt_cash_per_share
+        data_type: double
+        description: "Cash and cash equivalents per share."
+
+      - name: qty_employees
+        data_type: double
+        description: "Total number of employees reported by the company."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: mnt_company_income
+        data_type: double
+        description: "Net income reported by the company."
+
+      - name: mnt_company_sales
+        data_type: double
+        description: "Total sales reported by the company."
+
+      - name: rt_earnings_per_share_trail_twelve_months
+        data_type: double
+        description: "Earnings per share (EPS) over the trailing twelve months (TTM)."
+
+      - name: rt_earnings_per_share_next_quarter
+        data_type: double
+        description: "Estimated earnings per share (EPS) for the next fiscal quarter."
+
+      - name: dt_earnings_release_date
+        data_type: timestamp
+        description: "Next scheduled earnings announcement date at the time of data extraction."
+
+      - name: pct_earnings_per_share_surprise
+        data_type: double
+        description: "Percentage difference between reported earnings per share (EPS) and analyst expectations."
+
+      - name: pct_revenue_surprise
+        data_type: double
+        description: "Percentage difference between reported revenue and analyst expectations."
+
+      - name: dt_initial_public_offer_date
+        data_type: timestamp
+        description: "Date when the company first became publicly traded through an initial public offering (IPO)."
+
+      - name: pct_earnings_per_share_year_over_year_trail_twelve_months
+        data_type: double
+        description: "Year-over-year EPS growth over the trailing twelve months (TTM), expressed as a percentage."
+
+      - name: pct_sales_year_over_year_trail_twelve_months
+        data_type: double
+        description: "Year-over-year sales growth over the trailing twelve months (TTM), expressed as a percentage."
+
+      - name: rt_beta_coefficient
+        data_type: double
+        description: "Beta coefficient measuring the stock's volatility relative to the overall market. An asset with a beta of 0 means that its price is not at all correlated with the market. A positive beta means that the asset generally follows the market. A negative beta shows that the asset inversely follows the market, decreases in value if the market goes up."
+
+      - name: rt_average_true_range
+        data_type: double
+        description: "Average True Range (ATR), a technical indicator measuring market volatility. The Average True Range is an exponential moving average (14-days) of the True Ranges. The range of a day's trading is high-low, True Range extends it to yesterday's closing price if it was outside of today's range: True Range = max(high, closeprev) - min(low, closeprev)."
+
+      - name: pct_volatility_week
+        data_type: double
+        description: "Weekly stock price volatility, a statistical measure of the dispersion of returns for a given stock. Represents average weekly high/low trading range. Calculated as the standard deviation of weekly returns and expressed as a rate, it shows the typical weekly price change (up or down)."
+
+      - name: pct_volatility_month
+        data_type: double
+        description: "Monthly stock price volatility, a statistical measure of the dispersion of returns for a given stock. Represents average monthly high/low trading range. Calculated as the standard deviation of monthly returns and expressed as a rate, it shows the typical monthly price change (up or down)."
+
+      - name: pct_20_day_simple_moving_average_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 20-day simple moving average."
+
+      - name: pct_50_day_simple_moving_average_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 50-day simple moving average."
+
+      - name: pct_200_day_simple_moving_average_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 200-day simple moving average."
+
+      - name: rt_relative_strength_index_14
+        data_type: double
+        description: "14-day Relative Strength Index (RSI), a momentum oscillator measuring the speed and magnitude of price movements. The Relative Strength Index (RSI) is a technical analysis oscillator showing price strength by comparing upward and downward close-to-close movements."
+
+      - name: pct_earnings_per_share_growth_past_5_years
+        data_type: double
+        description: "Historical average annual EPS growth rate over the past five years, expressed as a rate."
+
+      - name: pct_earnings_per_share_growth_past_3_years
+        data_type: double
+        description: "Historical average annual EPS growth rate over the past three years, expressed as a rate."
+
+      - name: pct_earnings_per_share_growth_quarter_over_quarter
+        data_type: double
+        description: "Quarter-over-quarter EPS growth for the most recent period, expressed as a rate."
+
+      - name: pct_earnings_per_share_growth_this_year
+        data_type: double
+        description: "The portion of a company's profit allocated to each outstanding share of common stock. Expected or reported EPS growth rate for the current fiscal year, expressed as a rate."
+
+      - name: pct_earnings_per_share_growth_next_year
+        data_type: double
+        description: "The portion of a company's profit allocated to each outstanding share of common stock. Expected EPS growth rate for the next fiscal year, expressed as a rate."
+
+      - name: pct_earnings_per_share_growth_next_5_years
+        data_type: double
+        description: "Projected average annual EPS growth rate over the next five years, expressed as a rate."
+
+      - name: pct_sales_growth_past_3_years
+        data_type: double
+        description: "Historical average annual sales growth rate over the past three years, expressed as a rate."
+
+      - name: pct_sales_growth_past_5_years
+        data_type: double
+        description: "Historical average annual sales growth rate over the past five years, expressed as a rate."
+
+      - name: pct_sales_growth_quarter_over_quarter
+        data_type: double
+        description: "Quarter-over-quarter sales growth for the most recent period, expressed as a rate."
+
+      - name: pct_dividend_growth_1_year
+        data_type: double
+        description: "Dividend growth rate over the past one year, expressed as a rate."
+
+      - name: pct_dividend_growth_3_years
+        data_type: double
+        description: "Average annual dividend growth rate over the past three years, expressed as a rate."
+
+      - name: pct_dividend_growth_5_years
+        data_type: double
+        description: "Average annual dividend growth rate over the past five years, expressed as a rate."
+
+      - name: pct_performance_1_hour
+        data_type: double
+        description: "Stock price performance over the last hour, expressed as a rate change."
+
+      - name: pct_performance_2_hours
+        data_type: double
+        description: "Stock price performance over the last 2 hours, expressed as a rate change."
+
+      - name: pct_performance_4_hours
+        data_type: double
+        description: "Stock price performance over the last 4 hours, expressed as a rate change."
+
+      - name: pct_performance_week
+        data_type: double
+        description: "Stock price performance over the past week, expressed as a rate change."
+
+      - name: pct_performance_month
+        data_type: double
+        description: "Stock price performance over the past month, expressed as a rate change."
+
+      - name: pct_performance_quarter
+        data_type: double
+        description: "Stock price performance over the past quarter, expressed as a rate change."
+
+      - name: pct_50_day_high_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 50-day high."
+
+      - name: pct_50_day_low_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 50-day low."
+
+      - name: pct_performance_half_year
+        data_type: double
+        description: "Stock price performance over the past six months, expressed as a rate change."
+
+      - name: pct_performance_year_to_date
+        data_type: double
+        description: "Stock price performance year-to-date (YTD), expressed as a rate change."
+
+      - name: pct_52_week_high_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 52-week high."
+
+      - name: pct_52_week_low_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 52-week low."
+
+      - name: pct_performance_year
+        data_type: double
+        description: "Stock price performance over the past year, expressed as a rate change."
+
+      - name: pct_performance_3_years
+        data_type: double
+        description: "Stock price performance over the past three years, expressed as a rate change."
+
+      - name: pct_performance_5_years
+        data_type: double
+        description: "Stock price performance over the past five years, expressed as a rate change."
+
+      - name: pct_performance_10_years
+        data_type: double
+        description: "Stock price performance over the past ten years, expressed as a rate change."
+
+      - name: pct_all_time_high_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its all-time high."
+
+      - name: pct_all_time_low_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its all-time low."
+
+      - name: desc_news_title
+        data_type: string
+        description: "Headline or title of the related news article."
+
+      - name: dt_news_posting
+        data_type: timestamp
+        description: "Timestamp indicating when the related news item was published."
+
+      - name: desc_news_url
+        data_type: string
+        description: "URL linking to the full news article related to the stock."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "Timestamp indicating when the record was created."
+        tests:
+          - not_null

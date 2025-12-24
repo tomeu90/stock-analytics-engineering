@@ -1,0 +1,19 @@
+version: 2
+
+seeds:
+  - name: source_domains
+    description: "Lookup table mapping URL domain patterns to human-readable publisher names used for news source classification."
+    config:
+      tags: ['seed', asset, 'domain', 'news']
+
+    columns:
+      - name: domain
+        description: "Domain substring used to match against article URLs (e.g. finviz.com, marketwatch.com)."
+        tests:
+          - not_null
+          - unique
+
+      - name: source_name
+        description: "Canonical publisher name displayed in downstream models."
+        tests:
+          - not_null

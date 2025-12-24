@@ -1,0 +1,26 @@
+version: 2
+
+macros:
+  - name: ts_iso
+    description: "Attempts to parse a string field into a timestamp using common ISO-style date and datetime formats, including ISO 8601 with milliseconds and UTC suffix, as well as simplified date-only formats."
+    arguments:
+      - name: field
+        description: "The string field or expression to be parsed as a timestamp."
+
+  - name: ts_slash
+    description: "Attempts to parse a string field into a timestamp using slash-delimited date and datetime formats, supporting both month-first (M/d/yyyy) and day-first (d/M/yyyy) variations."
+    arguments:
+      - name: field
+        description: "The string field or expression to be parsed as a timestamp."
+
+  - name: parse_mixed_timestamps
+    description: "Parses a string field containing mixed timestamp formats by attempting ISO-style formats first, then slash-delimited formats. Returns the first successfully parsed timestamp."
+    arguments:
+      - name: field
+        description: "The string field or expression to be parsed as a timestamp."
+
+  - name: string_to_boolean
+    description: "Converts a string field containing 'yes' or 'no' values (case-insensitive) into a boolean. Returns NULL for any other values."
+    arguments:
+      - name: field
+        description: "The string field or expression to be converted to a boolean."
