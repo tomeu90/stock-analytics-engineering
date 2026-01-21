@@ -1,0 +1,110 @@
+version: 2
+
+models:
+  - name: fct_asset_price
+    description: >
+      Fact table containing session-level asset price, volume, and return
+      metrics, including after-hours activity and audit timestamps.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [asset, fact, prices]
+
+    tests:
+      - grain_unique:
+          columns: ['sk_asset_ticker', 'audit_loaded_at']
+
+    columns:
+      - name: sk_asset_ticker
+        data_type: string
+        description: "{{ doc('column_sk_asset_ticker') }}"
+        tests:
+          - not_null
+
+      - name: dt_session_date
+        data_type: timestamp
+        description: Trading session date derived from the audit load date.
+
+      - name: mnt_previous_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at the close of the previous trading session."
+
+      - name: pct_price_gap
+        description: "Rate price gap between the previous trading day's close and the current day's open."
+        data_type: decimal(10,4)
+
+      - name: mnt_open_price
+        data_type: decimal(10,2)
+        description: "Stock price at market open for the current trading session."
+
+      - name: mnt_high_price
+        data_type: decimal(10,2)
+        description: "Highest stock price reached during the current trading session."
+
+      - name: mnt_low_price
+        data_type: decimal(10,2)
+        description: "Lowest stock price reached during the current trading session."
+
+      - name: mnt_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at market close for the current trading session."
+
+      - name: mnt_after_hours_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at the close of after-hours trading."
+
+      - name: qty_trades
+        data_type: integer
+        description: "Total number of executed trades during the trading session."
+
+      - name: qty_volume
+        data_type: integer
+        description: "Total number of shares volume during the current trading session."
+
+      - name: qty_average_volume
+        data_type: integer
+        description: "Average daily number of shares traded volume during the day, as reported by Finviz."
+
+      - name: rt_relative_volume_ratio
+        data_type: double
+        description: "Rate that expresses the current trading volume relative to the stock's 3-month average trading volume, intraday adjusted."
+
+      - name: qty_after_hours_volume
+        data_type: integer
+        description: "Total number of shares executed during after-hours trading."
+
+      - name: pct_price_change
+        data_type: decimal(10,4)      
+        description: "Rate change in stock price from the previous trading session's close."
+
+      - name: pct_price_change_from_open
+        data_type: decimal(10,4)  
+        description: "Rate change between the current stock price and the market open price."
+
+      - name: pct_after_hours_price_change
+        data_type: decimal(10,4)  
+        description: "Rate change in stock price during after-hours trading. The difference between the regular close price and the after-hours price"
+
+      - name: mnt_52_week_low_price
+        data_type: decimal(10,2)  
+        description: "The stock's 52-week lowest price."
+
+      - name: mnt_52_week_high_price
+        data_type: decimal(10,2)  
+        description: "The stock's 52-week highest price."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "{{ doc('column_audit_loaded_at') }}"
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "{{ doc('column_audit_created_at') }}"
+        tests:
+          - not_null

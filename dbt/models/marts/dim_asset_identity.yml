@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: dim_asset_identity
+    description: >
+      Dimension table representing the current state of asset identity attributes. 
+      Built from the `asset_identity_snapshot`, it selects only the active (latest) records 
+      where `dbt_valid_to` is null and generates a surrogate key for each asset ticker.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [identity, asset, dimensions]
+
+    tests:
+      - grain_unique:
+          columns: ['sk_asset_ticker', 'audit_loaded_at']
+
+    columns:
+      - name: sk_asset_ticker
+        data_type: string
+        description: "{{ doc('column_sk_asset_ticker') }}"
+        tests:
+          - not_null
+
+      - name: desc_ticker
+        data_type: string
+        description: "Stock ticker symbol identifying the publicly traded company."
+        tests:
+          - not_null
+
+      - name: desc_company
+        data_type: string
+        description: "Full company name as listed on Finviz screener."
+        tests:
+          - not_null
+
+      - name: desc_sector
+        data_type: string
+        description: "Economic sector classification assigned to the stock (e.g., Technology, Healthcare)."
+        tests:
+          - not_null
+
+      - name: desc_industry
+        data_type: string
+        description: "Industry classification within the broader sector."
+        tests:
+          - not_null
+
+      - name: desc_country
+        data_type: string
+        description: "Country where the company is headquartered or primarily operates."
+        tests:
+          - not_null
+
+      - name: desc_exchange
+        data_type: string
+        description: "Stock exchange on which the company's shares are primarily listed."
+
+      - name: desc_index
+        data_type: string
+        description: "Major market indexes in which the stock is included (e.g., S&P 500, NASDAQ 100)."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "{{ doc('column_audit_loaded_at') }}"
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "{{ doc('column_audit_created_at') }}"
+        tests:
+          - not_null

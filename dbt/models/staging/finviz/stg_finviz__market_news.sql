@@ -2,7 +2,7 @@ with
 
 source as (
 
-    select * from {{ source('finviz', 'news_data') }}
+    select * from {{ source('finviz', 'news_data') }}  
 
 ),
 

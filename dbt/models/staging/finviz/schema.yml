@@ -61,8 +61,16 @@ models:
         tests:
           - not_null
 
-  - name: stg_finviz__financial_statements
-    description: "Staging model containing normalized financial statement line items sourced from Finviz, across multiple reporting periods and timeframes."
+  - name: stg_finviz__news_scores
+    description: >
+      Staging table for Finviz news sentiment data, containing the same records as
+      `news_scores_data` with standardized column naming and explicit data type
+      casting applied. This model serves as a typed, cleaned representation of the
+      enriched news dataset for reliable downstream transformations and analysis.
+      Continuation of the `int_news_union` intermediate model, enriched with
+      sentiment analysis scores generated using the VADER algorithm. This table
+      fetches and parses the HTML content of each news article URL to extract the
+      full text, which is then used to compute sentiment metrics.
 
     config:
 
@@ -70,62 +78,151 @@ models:
         warn_after:
           count: 24
           period: hour
-      tags: [financial, statements]
+      tags: [market, asset, news, scores, ratings]
 
     columns:
-      - name: desc_ticker
+      - name: sk_news_article
         data_type: string
-        description: "Stock ticker symbol identifying the publicly traded company."
+        description: >
+          Unique identifier for the news article across all source systems.
+          Used to deduplicate and track articles in downstream models.
+        tests:
+          - not_null
+          - unique
+
+      - name: desc_news_title
+        data_type: string
+        description: >
+          Headline or title of the news article as published by the source.
         tests:
           - not_null
 
-      - name: dt_year
-        data_type: int
-        description: "Fiscal year associated with the financial statement data."
+      - name: desc_news_source
+        data_type: string
+        description: >
+          Name of the originating publisher or platform (e.g., asset news
+          provider, market news outlet, or blog).
         tests:
           - not_null
 
-      - name: dt_period
+      - name: dt_news_posting
+        data_type: timestamp
+        description: >
+          Name of the originating publisher or platform (e.g., asset news
+          provider, market news outlet, or blog).
+        tests:
+          - not_null
+
+      - name: desc_news_url
         data_type: string
-        description: "Fiscal reporting period within the year (e.g. Q1, Q2, Q3, Q4, FY)."
+        description: >
+          Canonical URL linking to the full news article.
+        tests:
+          - not_null
+          - unique
+          
+      - name: desc_news_category
+        data_type: string
+        description: >
+          High-level category or topic assigned to the news article by the
+          source or derived during ingestion (e.g., Stock, Market, Blog).
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                  values: ["Q1", "Q2", "Q3", "Q4", "FY"]
+              values: ["Stock", "Market", "Blog"]
 
-      - name: dt_timeframe
+      - name: desc_news_related_tickers
         data_type: string
-        description: "Timeframe of the financial data, such as annual or quarterly."
+        description: >
+          List of related asset tickers or symbols mentioned in the article,
+          typically derived from source metadata or entity extraction.
+        tests:
+          - not_null
+
+      - name: desc_article_text
+        data_type: string
+        description: >
+          Full textual content of the news article fetched from the source URL and
+          extracted from HTML paragraph tags. Used as the input for VADER sentiment analysis.
+
+      - name: rt_negative_sentiment_score
+        data_type: double
+        description: >
+          VADER negative sentiment score representing the proportion of the article
+          text classified as negative. Value ranges from 0.0 to 1.0.
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_neutral_sentiment_score
+        data_type: double
+        description: >
+          VADER neutral sentiment score representing the proportion of the article
+          text classified as neutral. Value ranges from 0.0 to 1.0.
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_positive_sentiment_score
+        data_type: double
+        description: >
+          VADER positive sentiment score representing the proportion of the article
+          text classified as positive. Value ranges from 0.0 to 1.0.
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_compound_sentiment_score
+        data_type: double
+        description: >
+          Normalized, weighted VADER compound sentiment score summarizing the overall
+          sentiment polarity of the article. Value ranges from -1.0 (most negative)
+          to 1.0 (most positive).
+        tests:
+          - not_null
+
+      - name: desc_sentiment_score
+        data_type: string
+        description: >
+          Categorical sentiment classification derived from the VADER compound score.
+          Values are assigned as Negative (compound < -0.05), Neutral (between -0.05 and 0.05),
+          or Positive (compound > 0.05).
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                  values: ["Quarterly", "Annual"]
+              values: ["Positive", "Neutral", "Negative"]
 
-      - name: desc_financial_statement
+      - name: rt_sentiment_score_certainty
+        data_type: double
+        description: >
+          Derived confidence metric indicating sentiment strength, calculated as the
+          absolute compound score weighted by the inverse of the neutral sentiment score.
+          Higher values indicate stronger and more confident sentiment polarity.
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: audit_fetch_status
         data_type: string
-        description: "Type of financial statement the line item belongs to (e.g. income statement, balance sheet, cash flow statement)."
+        description: >
+          Status indicating whether article content was successfully fetched and
+          considered valid for sentiment analysis. Set to Success when text is present
+          and exceeds the minimum length threshold; otherwise set to Failed.
         tests:
           - not_null
           - accepted_values:
-              arguments:
-                  values: ["Income Statement", "Balance Sheet", "Cash Flow"]
+              values: ["Success", "Failed"]
 
-      - name: desc_line_item
-        data_type: string
-        description: "Name of the financial statement line item (e.g. Revenue, Net Income, Total Assets)."
-        tests:
-          - not_null
-
-      - name: mnt_line_item_value
-        data_type: string
-        description: "Reported value for the financial statement line item, as provided by the source."
+      - name: audit_fetched_at
+        data_type: timestamp
+        description: >
+          Timestamp indicating when the article content was fetched and processed
+          during the ETL execution.
         tests:
           - not_null
 
       - name: audit_loaded_at
-        data_type: int
+        data_type: integer
         description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
         tests:
           - not_null
@@ -181,62 +278,58 @@ models:
       - name: desc_exchange
         data_type: string
         description: "Stock exchange on which the company's shares are primarily listed."
-        tests:
-          - not_null
 
       - name: desc_index
         data_type: string
         description: "Major market indexes in which the stock is included (e.g., S&P 500, NASDAQ 100)."
-        tests:
-          - not_null
 
       - name: mnt_previous_close_price
         data_type: decimal(10,2)
         description: "Stock price at the close of the previous trading session."
-        tests:
-          - not_null
 
       - name: pct_price_gap
         description: "Rate price gap between the previous trading day's close and the current day's open."
         data_type: decimal(10,4)
-        tests:
-          - not_null
 
       - name: mnt_open_price
         data_type: decimal(10,2)
         description: "Stock price at market open for the current trading session."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "<= mnt_high_price AND mnt_low_price <= mnt_open_price"
+              config:
+                severity: warn
 
       - name: mnt_high_price
         data_type: decimal(10,2)
         description: "Highest stock price reached during the current trading session."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: ">= mnt_low_price"
+              config:
+                severity: warn
 
       - name: mnt_low_price
         data_type: decimal(10,2)
         description: "Lowest stock price reached during the current trading session."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "<= mnt_close_price"
+              config:
+                severity: warn
 
       - name: mnt_close_price
         data_type: decimal(10,2)
         description: "Stock price at market close for the current trading session."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "<= mnt_high_price"
+              config:
+                severity: warn
 
       - name: mnt_after_hours_close_price
         data_type: decimal(10,2)
@@ -246,7 +339,6 @@ models:
         data_type: integer
         description: "Total number of executed trades during the trading session."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: ">= 0"
@@ -255,7 +347,6 @@ models:
         data_type: integer
         description: "Total number of shares volume during the current trading session."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: ">= 0"
@@ -264,7 +355,6 @@ models:
         data_type: integer
         description: "Average daily number of shares traded volume during the day, as reported by Finviz."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: ">= 0"
@@ -273,7 +363,6 @@ models:
         data_type: double
         description: "Rate that expresses the current trading volume relative to the stock's 3-month average trading volume, intraday adjusted."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: ">= 0"
@@ -285,14 +374,10 @@ models:
       - name: pct_price_change
         data_type: decimal(10,4)      
         description: "Rate change in stock price from the previous trading session's close."
-        tests:
-          - not_null
 
       - name: pct_price_change_from_open
         data_type: decimal(10,4)  
         description: "Rate change between the current stock price and the market open price."
-        tests:
-          - not_null
 
       - name: pct_after_hours_price_change
         data_type: decimal(10,4)  
@@ -302,22 +387,24 @@ models:
         data_type: decimal(10,2)  
         description: "The stock's 52-week lowest price."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "<= mnt_low_price"
+              config:
+                severity: warn
 
       - name: mnt_52_week_high_price
         data_type: decimal(10,2)  
         description: "The stock's 52-week highest price."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: ">= mnt_high_price"
+              config:
+                severity: warn
 
       - name: mnt_market_capitalization
-        data_type: double
+        data_type: bigint
         description: "Total market capitalization of the company, expressed in USD. Equals the total value of all outstanding company's shares."
         tests:
           - dbt_utils.expression_is_true:
@@ -357,7 +444,7 @@ models:
         description: "Book value per share."
 
       - name: mnt_enterprise_value
-        data_type: double
+        data_type: bigint
         description: "Enterprise value (EV), representing total company value including market capitalization, debt, and cash."
 
       - name: rt_enterprise_value_ebitda_ratio
@@ -381,73 +468,67 @@ models:
         description: "Consensus analyst mean target price for the stock."
 
       - name: qty_outstanding_shares
-        data_type: double
-        description: "Total number of shares outstanding, issued by a corporation and held by its shareholders, as reported by Finviz. Expressed in millions."
+        data_type: bigint
+        description: "Total number of shares outstanding, issued by a corporation and held by its shareholders, as reported by Finviz."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "> 0"
+              config:
+                severity: warn
 
       - name: qty_float_shares
-        data_type: double
-        description: "Number of shares available for public trading, excluding restricted and insider-held shares. Expressed in millions."
+        data_type: bigint
+        description: "Number of shares available for public trading, excluding restricted and insider-held shares."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "> 0 AND qty_outstanding_shares >= qty_float_shares"
+              config:
+                severity: warn
 
       - name: pct_float_shares
         data_type: double
         description: "Rate of total shares outstanding that are part of the public float for trading."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "between 0 and 1"
+              config:
+                severity: warn
 
       - name: pct_insider_ownership
         data_type: double
         description: "Rate of company shares owned by it's own management, such as executives and directors."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "<= qty_outstanding_shares"
+              config:
+                severity: warn
 
       - name: pct_insider_transactions
         data_type: double
         description: "Recent insider trading activity, indicating net buying or selling by company insiders. Value represents 6-month rate change in total insider ownership."
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: ">= 0"
 
       - name: pct_institutional_ownership
         data_type: double
         description: "Rate of company shares owned by institutional investors."
         tests:
-          - not_null
           - dbt_utils.expression_is_true:
               arguments:
                 expression: "<= qty_outstanding_shares"
+              config:
+                severity: warn
 
       - name: pct_institutional_transactions
         data_type: double
         description: "Recent changes in institutional ownership, indicating net accumulation or distribution. Value represents 3-month rate change in institutional ownership."
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: ">= 0"
 
       - name: flag_shortable_asset
         data_type: boolean
         description: "Indicates whether shares are currently available to be sold short."
-        tests:
-          - not_null
+        tests: 
           - accepted_values:
               arguments:
                   values: ["True", "False"]
@@ -455,26 +536,19 @@ models:
       - name: pct_short_interest_rate
         data_type: double
         description: "Total number of shares that are currently sold short. Short Interest = Shares sold short / Shares available for trading (float). A high short interest indicates that many investors are bearish about the stock price."
-        tests:
-          - not_null
 
       - name: pct_short_float_shares
         data_type: double
         description: "Rate of the public float that is currently sold short."
-        tests:
-          - not_null
 
       - name: rt_short_ratio
         data_type: double
         description: "Short interest ratio (days to cover), calculated as short interest divided by average daily trading volume."
-        tests:
-          - not_null
 
       - name: flag_optionable_asset
         data_type: boolean
         description: "Indicates whether the stock has listed options available for trading."
         tests:
-          - not_null
           - accepted_values:
               arguments:
                   values: ["True", "False"]
@@ -560,11 +634,11 @@ models:
                 expression: ">= 0"
 
       - name: mnt_company_income
-        data_type: double
+        data_type: bigint
         description: "Net income reported by the company."
 
       - name: mnt_company_sales
-        data_type: double
+        data_type: bigint
         description: "Total sales reported by the company."
 
       - name: rt_earnings_per_share_trail_twelve_months

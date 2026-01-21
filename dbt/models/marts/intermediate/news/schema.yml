@@ -17,7 +17,7 @@ models:
       tags: [market, blog, asset, news]
 
     columns:
-      - name: id_news_article
+      - name: sk_news_article
         data_type: string
         description: >
           Unique identifier for the news article across all source systems.
@@ -74,6 +74,64 @@ models:
           typically derived from source metadata or entity extraction.
         tests:
           - not_null
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "Timestamp indicating when the record was created."
+        tests:
+          - not_null
+
+  - name: int_news_scores_exploded
+    description: >
+      Intermediate model that derives ticker-level sentiment signals from
+      stock-related news articles. The model filters successful Finviz news
+      records to the `Stock` category and explodes comma-separated related
+      tickers so that each row represents a single ticker-article sentiment
+      association. Sentiment scores are inherited from the source article and
+      made available at the ticker level for downstream aggregation and
+      analytics.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [asset, news, scores, ratings]
+
+    columns:
+      - name: desc_news_related_tickers
+        data_type: string
+        description: >
+          Individual related asset ticker or symbol, created by exploding the
+          original list of tickers so each row corresponds to one ticker.
+        tests:
+          - not_null
+
+      - name: rt_compound_sentiment_score
+        data_type: double
+        description: >
+          Normalized, weighted VADER compound sentiment score summarizing the overall
+          sentiment polarity of the article. Value ranges from -1.0 (most negative)
+          to 1.0 (most positive).
+        tests:
+          - not_null
+
+      - name: rt_sentiment_score_certainty
+        data_type: double
+        description: >
+          Derived confidence metric indicating sentiment strength, calculated as the
+          absolute compound score weighted by the inverse of the neutral sentiment score.
+          Higher values indicate stronger and more confident sentiment polarity.
+        tests:
+          - not_null
+          - normalized_range
 
       - name: audit_loaded_at
         data_type: int

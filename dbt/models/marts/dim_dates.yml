@@ -1,0 +1,84 @@
+version: 2
+
+models:
+  - name: dim_dates
+    description: >
+      Date dimension table providing calendar attributes and derived flags
+      for analytical time-based reporting.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [dates , dimensions]
+
+    columns:
+      - name: sk_date
+        data_type: string
+        description: Surrogate key uniquely identifying the calendar date.
+        tests:
+          - not_null
+          - unique
+
+      - name: dt_date
+        data_type: timestamp
+        description: Calendar date represented as a timestamp.
+        tests:
+          - not_null
+          - unique
+
+      - name: dt_year
+        data_type: integer
+        description: Calendar year extracted from the date.
+        tests:
+          - not_null
+
+      - name: dt_quarter
+        data_type: integer
+        description: Calendar quarter extracted from the date.
+        tests:
+          - not_null
+          
+      - name: dt_month
+        data_type: integer
+        description: Calendar month extracted from the date.
+        tests:
+          - not_null
+          
+      - name: dt_day
+        data_type: integer
+        description: Day of the month.
+        tests:
+          - not_null
+          
+      - name: dt_string_date
+        data_type: string
+        description: Calendar date formatted as a YYYY-MM-DD string.
+        tests:
+          - not_null
+          
+      - name: dt_day_of_week
+        data_type: integer
+        description: Day of the week where Sunday = 0 and Saturday = 6.
+        tests:
+          - not_null
+          
+      - name: dt_day_of_year
+        data_type: integer
+        description: Day number within the calendar year.
+        tests:
+          - not_null
+          
+      - name: flag_is_weekend
+        data_type: boolean
+        description: Indicates whether the date falls on a weekend.
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "{{ doc('column_audit_created_at') }}"
+        tests:
+          - not_null

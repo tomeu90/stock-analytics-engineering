@@ -1,0 +1,210 @@
+version: 2
+
+models:
+  - name: fct_asset_performance
+    description: >
+      Fact table capturing multi-horizon price performance, momentum strength,
+      acceleration, drawdowns, recovery signals, and overextension indicators.
+      Includes both numeric metrics and categorical interpretations designed
+      for trend analysis, risk assessment, and tactical signal generation.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [asset, fact, performance]
+
+    tests:
+      - grain_unique:
+          columns: ['sk_asset_ticker', 'audit_loaded_at']
+
+    columns:
+      - name: sk_asset_ticker
+        data_type: string
+        description: "{{ doc('column_sk_asset_ticker') }}"
+        tests:
+          - not_null
+
+      - name: pct_performance_1_hour
+        data_type: double
+        description: "Stock price performance over the last hour, expressed as a rate change."
+
+      - name: pct_performance_2_hours
+        data_type: double
+        description: "Stock price performance over the last 2 hours, expressed as a rate change."
+
+      - name: pct_performance_4_hours
+        data_type: double
+        description: "Stock price performance over the last 4 hours, expressed as a rate change."
+
+      - name: pct_performance_day
+        data_type: double
+        description: "Stock price performance over the last day, expressed as a rate change."
+
+      - name: pct_performance_week
+        data_type: double
+        description: "Stock price performance over the past week, expressed as a rate change."
+
+      - name: pct_performance_month
+        data_type: double
+        description: "Stock price performance over the past month, expressed as a rate change."
+
+      - name: pct_performance_quarter
+        data_type: double
+        description: "Stock price performance over the past quarter, expressed as a rate change."
+
+      - name: pct_performance_half_year
+        data_type: double
+        description: "Stock price performance over the past six months, expressed as a rate change."
+
+      - name: pct_performance_year_to_date
+        data_type: double
+        description: "Stock price performance year-to-date (YTD), expressed as a rate change."
+
+      - name: pct_performance_year
+        data_type: double
+        description: "Stock price performance over the past year, expressed as a rate change."
+
+      - name: pct_performance_3_years
+        data_type: double
+        description: "Stock price performance over the past three years, expressed as a rate change."
+
+      - name: pct_performance_5_years
+        data_type: double
+        description: "Stock price performance over the past five years, expressed as a rate change."
+
+      - name: pct_performance_10_years
+        data_type: double
+        description: "Stock price performance over the past ten years, expressed as a rate change."
+
+      - name: pct_50_day_high_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 50-day high."
+
+      - name: pct_50_day_low_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 50-day low."
+
+      - name: pct_52_week_high_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 52-week high."
+
+      - name: pct_52_week_low_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 52-week low."
+
+      - name: pct_all_time_high_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its all-time high."
+
+      - name: pct_all_time_low_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its all-time low."
+
+      - name: flag_overextension_signal
+        data_type: boolean
+        description: >
+          Indicates potential price overextension. True when the asset is
+          within 5% of its all-time high while posting strong recent monthly gains,
+          suggesting elevated short-term pullback risk.
+
+      - name: rt_upside_downside_ratio
+        data_type: double
+        description: >
+          Ratio comparing distance from 52-week high to distance from 52-week low.
+          Values greater than 1 indicate more upside recovery relative to downside risk.
+
+      - name: pct_drawdown_from_52_week_high
+        data_type: double
+        description: Absolute percentage drawdown from the 52-week high.
+
+      - name: desc_drawdown_from_52_week_high
+        data_type: string
+        description: >
+          Categorical interpretation of drawdown severity.
+          Values represent: Near 52-Week High (<10% drawdown),
+          Moderate Drawdown (10%-30%),
+          and Deep Drawdown (>30%).
+
+      - name: rt_momentum_to_drawdown_ratio
+        data_type: double
+        description: >
+          Ratio of recent monthly momentum to current drawdown from the 52-week high.
+          Higher values indicate strong momentum relative to remaining recovery distance.
+
+      - name: flag_strong_uptrend
+        data_type: boolean
+        description: >
+          Indicates a persistent bullish trend across multiple horizons.
+          True when day, week, month, and year performance are all positive.
+
+      - name: flag_strong_downtrend
+        data_type: boolean
+        description: >
+          Indicates a persistent bearish trend across multiple horizons.
+          True when day, week, month, and year performance are all negative.
+
+      - name: pct_momentum_acceleration_week
+        data_type: double
+        description: Difference between daily and weekly performance, measuring short-term momentum acceleration.
+
+      - name: desc_pct_momentum_acceleration_week_change
+        data_type: string
+        description: >
+          Categorical interpretation of short-term momentum change.
+          Values represent: Accelerating Trend (daily outperforming weekly),
+          Decelerating Trend (daily underperforming weekly),
+          or Stable Trend (minimal change).
+
+      - name: pct_momentum_acceleration_month
+        data_type: float
+        description: Difference between weekly and monthly performance, measuring medium-term acceleration.
+
+      - name: desc_pct_momentum_acceleration_month_change
+        data_type: string
+        description: >
+          Categorical interpretation of medium-term momentum change.
+          Values represent accelerating, decelerating, or stable trend dynamics.
+
+      - name: pct_momentum_acceleration_year
+        data_type: double
+        description: Difference between monthly and yearly performance, measuring long-term acceleration.
+
+      - name: desc_pct_momentum_acceleration_year_change
+        data_type: string
+        description: >
+          Categorical interpretation of long-term momentum change.
+          Values represent accelerating secular trend, decelerating trend,
+          or stable long-term momentum.
+
+      - name: flag_recovery_signal
+        data_type: boolean
+        description: >
+          Indicates a potential recovery phase. True when the asset is meaningfully
+          off its 52-week low while posting positive weekly and monthly momentum.
+
+      - name: pct_average_intraday_move
+        data_type: double
+        description: >
+          Average absolute intraday price movement across 1-hour, 2-hour,
+          and 4-hour horizons, serving as a short-term volatility proxy.
+
+      - name: pct_horizon_dispersion
+        data_type: double
+        description: >
+          Statistical dispersion of performance across daily, weekly,
+          and monthly horizons. Higher values indicate inconsistent or unstable momentum.
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "{{ doc('column_audit_loaded_at') }}"
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "{{ doc('column_audit_created_at') }}"
+        tests:
+          - not_null

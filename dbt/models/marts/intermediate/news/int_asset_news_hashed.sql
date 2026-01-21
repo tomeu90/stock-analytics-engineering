@@ -31,12 +31,13 @@ normalized as (
 
     from enriched enr
     left join {{ ref('source_domains') }} seed
-        on enr.domain = seed.domain
+        using (domain)
+        
 ),
 
 hashed as (
     select
-        {{ dbt_utils.generate_surrogate_key(['desc_news_url']) }} :: string as id_news_article,
+        {{ dbt_utils.generate_surrogate_key(['desc_news_url']) }} :: string as sk_news_article,
         *
 
     from normalized    

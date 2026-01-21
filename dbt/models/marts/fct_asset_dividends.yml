@@ -1,0 +1,83 @@
+version: 2
+
+models:
+  - name: fct_asset_dividends
+    description: >
+      Fact table containing dividend, yield, payout, and dividend growth
+      metrics for assets, including derived total return per share and
+      audit timestamps.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [asset, fact, dividends]
+
+    tests:
+      - grain_unique:
+          columns: ['sk_asset_ticker', 'audit_loaded_at']
+
+    columns:
+      - name: sk_asset_ticker
+        data_type: string
+        description: "{{ doc('column_sk_asset_ticker') }}"
+        tests:
+          - not_null
+
+      - name: mnt_annual_dividend_per_share
+        data_type: double
+        description: "Annual dividend paid per share."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: mnt_total_return_per_share
+        data_type: double
+        description: Total return per share calculated as closing price plus annual dividend per share.
+
+      - name: mnt_dividend_per_share_trail_twelve_months
+        data_type: double
+        description: "Total dividends paid per share over the trailing twelve months (TTM)."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: dt_dividend_excluding_date
+        data_type: timestamp
+        description: "Ex-dividend date, after which a buyer is not entitled to receive the upcoming dividend for the current fiscal period."
+
+      - name: pct_dividend_yield
+        data_type: double
+        description: "The dividend yield equals the annual dividend per share divided by the stock's price. This measurement tells what percentage return a company pays out to shareholders in the form of dividends. If there is no forward dividend estimate available, trailing twelve month (TTM) value is used."
+
+      - name: pct_payout_ratio
+        data_type: double
+        description: "Dividend payout ratio, indicating the percentage of earnings paid out as dividends."
+
+      - name: pct_dividend_growth_1_year
+        data_type: double
+        description: "Dividend growth rate over the past one year, expressed as a rate."
+
+      - name: pct_dividend_growth_3_years
+        data_type: double
+        description: "Average annual dividend growth rate over the past three years, expressed as a rate."
+
+      - name: pct_dividend_growth_5_years
+        data_type: double
+        description: "Average annual dividend growth rate over the past five years, expressed as a rate."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "{{ doc('column_audit_loaded_at') }}"
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "{{ doc('column_audit_created_at') }}"
+        tests:
+          - not_null

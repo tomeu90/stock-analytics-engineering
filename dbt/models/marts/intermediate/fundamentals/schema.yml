@@ -1,0 +1,327 @@
+version: 2
+
+models:
+  - name: int_asset_fundamentals_normalized
+    description: >
+      Intermediate model that 
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [fundamentals, ratings, asset]
+
+    columns:
+      - name: desc_ticker
+        data_type: string
+        description: >
+          Stock ticker symbol identifying the publicly traded company.
+
+      - name: pct_return_on_assets
+        data_type: double
+        description: "Return on assets (ROA), measuring profitability relative to total assets, expressed as a rate. An indicator of how profitable a company is relative to its total assets. ROA gives an idea as to how efficient management is at using its assets to generate earnings. Calculated by dividing a company's annual earnings by its total assets, ROA is displayed as a percentage."
+
+      - name: pct_return_on_equity
+        data_type: double
+        description: "Return on equity (ROE), measuring profitability relative to shareholders' equity, expressed as a rate. A measure of a corporation's profitability that reveals how much profit a company generates with the money shareholders have invested. Calculated as Net Income / Shareholder's Equity."
+
+      - name: pct_return_on_invested_capital
+        data_type: double
+        description: "Return on invested capital (ROIC), measuring efficiency of capital allocation, expressed as a rate. A financial metric used to measure a company's efficiency in allocating its capital to generate returns. It assesses how well a company is using its resources to create value for its investors. ROIC is particularly useful for evaluating a company's profitability and its ability to sustain competitive advantages over time. ROIC is calculated as Net Income / Invested Capital."
+
+      - name: rt_current_ratio
+        data_type: double
+        description: "A liquidity ratio that measures a company's ability to pay short-term obligations. Calculated as Current Assets / Current Liabilities."
+
+      - name: rt_quick_ratio
+        data_type: double
+        description: "An indicator of a company's short-term liquidity. The quick ratio measures a company's ability to meet its short-term obligations with its most liquid assets. The higher the quick ratio, the better the position of the company. Calculated as (Current Assets - Inventories) / Current Liabilities."
+
+      - name: rt_long_term_debt_equity_ratio
+        data_type: double
+        description: "Long-term debt-to-equity ratio, measuring long-term financial leverage. It's calculated by dividing its long term debt by stockholders' equity. It indicates what proportion of equity and long-term debt the company is using to finance its assets."
+
+      - name: rt_total_debt_equity_ratio
+        data_type: double
+        description: "Total debt-to-equity ratio, measuring overall financial leverage including short- and long-term debt. A measure of a company's financial leverage calculated by dividing its liabilities by stockholders' equity. It indicates what proportion of equity and debt the company is using to finance its assets."
+
+      - name: pct_gross_margin
+        data_type: double
+        description: "A company's total sales revenue minus its cost of goods sold, divided by the total sales revenue, expressed as a rate. The gross margin represents the percent of total sales revenue that the company retains after incurring the direct costs associated with producing the goods and services sold by a company. The higher the percentage, the more the company retains on each dollar of sales to service its other costs and obligations."
+
+      - name: pct_operating_margin
+        data_type: double
+        description: "Operating margin is a measurement of what proportion of a company's revenue is left over after paying for variable costs of production such as wages, raw materials, etc. A healthy operating margin is required for a company to be able to pay for its fixed costs, such as interest on debt. Calculated as Operating Income / Net Sales, expressed as a rate."
+
+      - name: pct_profit_margin
+        data_type: double
+        description: "A ratio of profitability calculated as net income divided by revenues, or net profits divided by sales. It measures how much out of every dollar of sales a company actually keeps in earnings, expressed as a rate."
+
+      - name: mnt_cash_per_share
+        data_type: double
+        description: "Cash and cash equivalents per share."
+
+      - name: qty_employees
+        data_type: double
+        description: "Total number of employees reported by the company."
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: mnt_company_income
+        data_type: bigint
+        description: "Net income reported by the company."
+
+      - name: mnt_company_sales
+        data_type: bigint
+        description: "Total sales reported by the company."
+        
+      - name: rt_earnings_per_share_trail_twelve_months
+        data_type: double
+        description: "Earnings per share (EPS) over the trailing twelve months (TTM)."
+
+      - name: rt_earnings_per_share_next_quarter
+        data_type: double
+        description: "Estimated earnings per share (EPS) for the next fiscal quarter."
+
+      - name: dt_earnings_release_date
+        data_type: timestamp
+        description: "Next scheduled earnings announcement date at the time of data extraction."
+
+      - name: pct_earnings_per_share_surprise
+        data_type: double
+        description: "Percentage difference between reported earnings per share (EPS) and analyst expectations."
+
+      - name: pct_revenue_surprise
+        data_type: double
+        description: "Percentage difference between reported revenue and analyst expectations."
+        
+      - name: dt_initial_public_offer_date
+        data_type: timestamp
+        description: "Date when the company first became publicly traded through an initial public offering (IPO)."
+
+      - name: pct_earnings_per_share_year_over_year_trail_twelve_months
+        data_type: double
+        description: "Year-over-year EPS growth over the trailing twelve months (TTM), expressed as a percentage."
+        
+      - name: pct_earnings_per_share_growth_past_5_years
+        data_type: double
+        description: "Historical average annual EPS growth rate over the past five years, expressed as a rate."
+
+      - name: pct_earnings_per_share_growth_past_3_years
+        data_type: double
+        description: "Historical average annual EPS growth rate over the past three years, expressed as a rate."
+
+      - name: pct_earnings_per_share_growth_quarter_over_quarter
+        data_type: double
+        description: "Quarter-over-quarter EPS growth for the most recent period, expressed as a rate."
+
+      - name: pct_earnings_per_share_growth_this_year
+        data_type: double
+        description: "The portion of a company's profit allocated to each outstanding share of common stock. Expected or reported EPS growth rate for the current fiscal year, expressed as a rate."
+        
+      - name: pct_earnings_per_share_growth_next_year
+        data_type: double
+        description: "The portion of a company's profit allocated to each outstanding share of common stock. Expected EPS growth rate for the next fiscal year, expressed as a rate."
+
+      - name: pct_earnings_per_share_growth_next_5_years
+        data_type: double
+        description: "Projected average annual EPS growth rate over the next five years, expressed as a rate."
+
+      - name: pct_sales_growth_past_3_years
+        data_type: double
+        description: "Historical average annual sales growth rate over the past three years, expressed as a rate."
+
+      - name: pct_sales_growth_past_5_years
+        data_type: double
+        description: "Historical average annual sales growth rate over the past five years, expressed as a rate."
+
+      - name: pct_sales_growth_quarter_over_quarter
+        data_type: double
+        description: "Quarter-over-quarter sales growth for the most recent period, expressed as a rate."
+        
+      - name: pct_sales_year_over_year_trail_twelve_months
+        data_type: double
+        description: "Year-over-year sales growth over the trailing twelve months (TTM), expressed as a percentage."
+        
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+        tests:
+          - not_null
+        
+      - name: rt_shaped_current_ratio
+        data_type: double
+        description: >
+          Liquidity ratio measuring the company's ability to pay short-term obligations,
+          calculated as current assets divided by current liabilities, after real-time shaping.
+
+      - name: rt_shaped_quick_ratio
+        data_type: double
+        description: >
+          Conservative liquidity ratio measuring the ability to meet short-term liabilities
+          using highly liquid assets, excluding inventory, after real-time shaping.
+
+      - name: rt_shaped_total_debt_equity_ratio
+        data_type: double
+        description: >
+          Leverage ratio indicating the proportion of total debt relative to shareholders' equity,
+          adjusted through real-time shaping.
+
+      - name: rt_normalized_gross_margin
+        data_type: double
+        description: >
+          Profitability ratio representing gross profit as a percentage of revenue,
+          normalized to remove non-recurring or anomalous effects.
+
+      - name: rt_normalized_operating_margin
+        data_type: double
+        description: >
+          Operating income expressed as a percentage of revenue, normalized to reflect
+          core operational performance.
+
+      - name: rt_normalized_profit_margin
+        data_type: double
+        description: >
+          Net income as a percentage of revenue, normalized to exclude one-time or irregular items.
+
+      - name: rt_normalized_return_on_assets
+        data_type: double
+        description: >
+          Efficiency metric measuring how effectively assets generate profit,
+          calculated as normalized net income divided by total assets.
+
+      - name: rt_normalized_return_on_equity
+        data_type: double
+        description: >
+          Profitability ratio measuring returns generated on shareholders' equity,
+          normalized for comparability across periods.
+
+      - name: rt_normalized_return_on_invested_capital
+        data_type: double
+        description: >
+          Measure of capital efficiency indicating how well invested capital generates returns,
+          normalized to reflect sustainable operating performance.
+
+      - name: rt_normalized_current_ratio
+        data_type: double
+        description: >
+          Normalized liquidity ratio assessing the ability to cover short-term liabilities
+          with current assets.
+
+      - name: rt_normalized_quick_ratio
+        data_type: double
+        description: >
+          Normalized measure of short-term liquidity using only the most liquid assets,
+          excluding inventory.
+
+      - name: rt_normalized_total_debt_equity_ratio
+        data_type: double
+        description: >
+          Normalized leverage ratio comparing total debt to shareholders' equity,
+          adjusted to remove distortions from unusual financing events.
+
+      - name: rt_normalized_earnings_per_share_year_over_year_trail_twelve_months
+        data_type: double
+        description: >
+          Year-over-year growth rate of earnings per share based on trailing twelve months,
+          normalized for extraordinary items.
+
+      - name: rt_normalized_earnings_per_share_growth_past_5_years
+        data_type: double
+        description: >
+          Compound annual growth rate of earnings per share over the past five years,
+          normalized to reflect underlying earnings trends.
+        
+      - name: rt_normalized_earnings_per_share_growth_past_3_years
+        data_type: double
+        description: >
+          Compound annual growth rate of earnings per share over the past three years,
+          normalized to remove the impact of non-recurring items.
+
+      - name: rt_normalized_earnings_per_share_growth_quarter_over_quarter
+        data_type: double
+        description: >
+          Quarter-over-quarter growth rate of earnings per share, normalized for
+          extraordinary or seasonal effects.
+
+      - name: rt_normalized_earnings_per_share_growth_this_year
+        data_type: double
+        description: >
+          Expected or realized earnings per share growth for the current fiscal year,
+          normalized for unusual items.
+
+      - name: rt_normalized_earnings_per_share_growth_next_year
+        data_type: double
+        description: >
+          Forecasted earnings per share growth for the next fiscal year,
+          normalized to reflect sustainable earnings expectations.
+
+      - name: rt_normalized_earnings_per_share_growth_next_5_years
+        data_type: double
+        description: >
+          Long-term projected compound annual growth rate of earnings per share over
+          the next five years, normalized for comparability.
+
+      - name: rt_normalized_sales_growth_past_3_years
+        data_type: double
+        description: >
+          Compound annual growth rate of sales over the past three years,
+          normalized to exclude one-time revenue effects.
+
+      - name: rt_normalized_sales_growth_past_5_years
+        data_type: double
+        description: >
+          Compound annual growth rate of sales over the past five years,
+          normalized to reflect underlying revenue trends.
+
+      - name: rt_normalized_sales_growth_quarter_over_quarter
+        data_type: double
+        description: >
+          Quarter-over-quarter growth rate in sales, normalized for seasonal and
+          non-recurring fluctuations.
+
+      - name: rt_normalized_sales_year_over_year_trail_twelve_months
+        data_type: double
+        description: >
+          Year-over-year sales growth based on trailing twelve months,
+          normalized to remove anomalous revenue impacts.
+
+      - name: rt_normalized_earnings_per_share_surprise
+        data_type: double
+        description: >
+          Percentage difference between reported and consensus-expected earnings
+          per share, normalized for accounting adjustments.
+
+      - name: rt_normalized_revenue_surprise
+        data_type: double
+        description: >
+          Percentage difference between reported and consensus-expected revenue,
+          normalized for timing or recognition effects.
+
+      - name: rt_normalized_growth_near_term
+        data_type: double
+        description: >
+          Composite measure of near-term growth expectations based on recent and
+          short-horizon earnings and revenue trends, normalized for comparability.
+
+      - name: rt_normalized_growth_forward
+        data_type: double
+        description: >
+          Forward-looking growth metric incorporating analyst forecasts and
+          projected fundamentals, normalized to reduce forecast bias.
+
+      - name: rt_normalized_growth_structural
+        data_type: double
+        description: >
+          Long-term structural growth indicator reflecting sustainable expansion
+          driven by business fundamentals, normalized across companies.
+
+      - name: rt_normalized_fundamental_growth_factor
+        data_type: double
+        description: >
+          Composite factor summarizing normalized earnings, revenue, and cash flow
+          growth metrics into a single fundamental growth score.

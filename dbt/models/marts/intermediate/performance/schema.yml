@@ -1,0 +1,120 @@
+models:
+  - name: int_asset_performance_normalized
+    description: >
+      Intermediate model calculating normalized momentum metrics for assets
+      based on historical performance over multiple timeframes. Includes raw
+      momentum, consistency, drawdown adjustments, and percentile normalization.
+      
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [performance, ratings, asset]
+
+    columns:
+      - name: desc_ticker
+        data_type: string
+        description: >
+          Stock ticker symbol identifying the publicly traded company.
+
+      - name: pct_performance_1_hour
+        data_type: double
+        description: "Stock price performance over the last hour, expressed as a rate change."
+
+      - name: pct_performance_2_hours
+        data_type: double
+        description: "Stock price performance over the last 2 hours, expressed as a rate change."
+
+      - name: pct_performance_4_hours
+        data_type: double
+        description: "Stock price performance over the last 4 hours, expressed as a rate change."
+
+      - name: pct_performance_day
+        data_type: double
+        description: "Stock price performance over the last day, expressed as a rate change."
+
+      - name: pct_performance_week
+        data_type: double
+        description: "Stock price performance over the past week, expressed as a rate change."
+
+      - name: pct_performance_month
+        data_type: double
+        description: "Stock price performance over the past month, expressed as a rate change."
+
+      - name: pct_performance_quarter
+        data_type: double
+        description: "Stock price performance over the past quarter, expressed as a rate change."
+
+      - name: pct_50_day_high_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 50-day high."
+
+      - name: pct_50_day_low_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 50-day low."
+
+      - name: pct_performance_half_year
+        data_type: double
+        description: "Stock price performance over the past six months, expressed as a rate change."
+
+      - name: pct_performance_year_to_date
+        data_type: double
+        description: "Stock price performance year-to-date (YTD), expressed as a rate change."
+
+      - name: pct_52_week_high_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 52-week high."
+
+      - name: pct_52_week_low_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 52-week low."
+
+      - name: pct_performance_year
+        data_type: double
+        description: "Stock price performance over the past year, expressed as a rate change."
+
+      - name: pct_performance_3_years
+        data_type: double
+        description: "Stock price performance over the past three years, expressed as a rate change."
+
+      - name: pct_performance_5_years
+        data_type: double
+        description: "Stock price performance over the past five years, expressed as a rate change."
+
+      - name: pct_performance_10_years
+        data_type: double
+        description: "Stock price performance over the past ten years, expressed as a rate change."
+
+      - name: pct_all_time_high_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its all-time high."
+
+      - name: pct_all_time_low_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its all-time low."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+
+      - name: rt_normalized_raw_momentum
+        data_type: double
+        description: Weighted combination of monthly, half-year, and annual performance.
+
+      - name: rt_normalized_momentum_consistency
+        data_type: double
+        description: Fraction of positive momentum periods (month, half-year, year).
+
+      - name: rt_normalized_capped_drawdown
+        data_type: double
+        description: Capped drawdown based on 52-week high distance (min -50%).
+
+      - name: rt_normalized_momentum_score_raw
+        data_type: double
+        description: Raw momentum score combining raw momentum, consistency, and drawdown adjustments.
+
+      - name: rt_normalized_momentum_score
+        data_type: double
+        description: Percentile-ranked normalized momentum score (0-1).

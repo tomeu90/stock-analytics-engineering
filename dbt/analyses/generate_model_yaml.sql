@@ -1,3 +1,3 @@
 {{ codegen.generate_model_yaml(
-    model_names=['int_news_union']
+    model_names=['int_asset_fundamentals_normalized']
 ) }}
