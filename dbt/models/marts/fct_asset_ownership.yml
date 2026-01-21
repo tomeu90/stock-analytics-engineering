@@ -1,0 +1,152 @@
+version: 2
+
+models:
+  - name: fct_asset_ownership
+    description: >
+      Fact table capturing asset ownership structure, float characteristics,
+      insider and institutional behavior, short interest dynamics, and
+      optionability, including categorical interpretations and audit metadata.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [asset, fact, ownership]
+
+    tests:
+      - grain_unique:
+          columns: ['sk_asset_ticker', 'audit_loaded_at']
+
+    columns:
+      - name: sk_asset_ticker
+        data_type: string
+        description: "{{ doc('column_sk_asset_ticker') }}"
+        tests:
+          - not_null
+
+      - name: qty_outstanding_shares
+        data_type: bigint
+        description: "Total number of shares outstanding, issued by a corporation and held by its shareholders, as reported by Finviz."
+
+      - name: qty_float_shares
+        data_type: bigint
+        description: "Number of shares available for public trading, excluding restricted and insider-held shares."
+
+      - name: desc_float_shares_quantity
+        data_type: string
+        description: >
+          Categorical classification of float size based on absolute share count.
+          Values represent: Micro Float (<10 million shares), Small Float
+          (10-50 million shares), Medium Float (50-200 million shares),
+          and Large Float (>200 million shares).
+
+      - name: pct_float_shares
+        data_type: double
+        description: "Rate of total shares outstanding that are part of the public float for trading."
+
+      - name: desc_float_shares_percentage
+        data_type: string
+        description: >
+          Categorical assessment of float tightness based on percentage of shares
+          available to trade. Values represent: Very Tight Float (<25%),
+          Tight Float (25%-50%), Normal Float (50%-75%), and Wide Float (>75%).
+
+      - name: pct_insider_ownership
+        data_type: double
+        description: "Rate of company shares owned by it's own management, such as executives and directors."
+
+      - name: desc_insider_ownership
+        data_type: string
+        description: >
+          Categorized level of insider ownership. Values represent:
+          Minimal Insider Ownership (<1%), Low Insider Ownership (1%-5%),
+          Moderate Insider Ownership (5%-10%), and High Insider Ownership (>10%).
+
+      - name: pct_insider_transactions
+        data_type: double
+        description: "Recent insider trading activity, indicating net buying or selling by company insiders. Value represents 6-month rate change in total insider ownership."
+
+      - name: desc_insider_transactions
+        data_type: string
+        description: >
+          Directional assessment of insider trading activity. Values represent:
+          Net Selling (negative change), Neutral (no change), and Net Buying
+          (positive change).
+
+      - name: pct_institutional_ownership
+        data_type: double
+        description: "Rate of company shares owned by institutional investors."
+
+      - name: desc_institutional_ownership
+        data_type: string
+        description: >
+          Categorized level of institutional ownership. Values represent:
+          Low Institutional Presence (<25%), Moderate Institutional Presence
+          (25%-50%), High Institutional Presence (50%-75%), and Very High
+          Institutional Presence (>75%).
+
+      - name: pct_institutional_transactions
+        data_type: double
+        description: "Recent changes in institutional ownership, indicating net accumulation or distribution. Value represents 3-month rate change in institutional ownership."
+
+      - name: desc_institutional_transactions
+        data_type: string
+        description: >
+          Directional assessment of institutional trading activity. Values represent:
+          Net Selling (negative change), Neutral (no change), and Net Buying
+          (positive change).
+
+      - name: flag_shortable_asset
+        data_type: boolean
+        description: "Indicates whether shares are currently available to be sold short."
+
+      - name: pct_short_interest_rate
+        data_type: double
+        description: "Total number of shares that are currently sold short. Short Interest = Shares sold short / Shares available for trading (float). A high short interest indicates that many investors are bearish about the stock price."
+
+      - name: desc_short_interest_rate
+        data_type: string
+        description: >
+          Categorized assessment of short interest intensity. Values represent:
+          Low Short Interest (<5%), Moderate Short Interest (5%-10%),
+          High Short Interest (10%-20%), and Extreme Short Interest (>20%).
+
+      - name: pct_short_float_shares
+        data_type: double
+        description: "Rate of the public float that is currently sold short."
+
+      - name: desc_short_float_shares
+        data_type: string
+        description: >
+          Categorized assessment of short interest relative to float.
+          Values represent: Low Short Float (<5%), Moderate Short Float (5%-10%),
+          High Short Float (10%-20%), and Crowded Short (>20%).
+
+      - name: rt_short_ratio
+        data_type: double
+        description: "Short interest ratio (days to cover), calculated as short interest divided by average daily trading volume."
+
+      - name: desc_short_ratio
+        data_type: string
+        description: >
+          Categorical assessment of short-covering difficulty based on days-to-cover.
+          Values represent: Very Easy to Cover (<1 day), Easy to Cover (1-3 days),
+          Hard to Cover (3-7 days), and Very Hard to Cover (>7 days).
+
+      - name: flag_optionable_asset
+        data_type: boolean
+        description: "Indicates whether the stock has listed options available for trading."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "{{ doc('column_audit_loaded_at') }}"
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "{{ doc('column_audit_created_at') }}"
+        tests:
+          - not_null

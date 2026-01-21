@@ -1,1 +1,3 @@
-# stock_analytics
+# stock-analytics-engineering
+
+In progress...

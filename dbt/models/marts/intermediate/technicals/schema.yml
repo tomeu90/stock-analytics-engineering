@@ -1,0 +1,280 @@
+models:
+  - name: int_price_technicals_base
+    description: >
+      Base technical and price-level model providing session-level price,
+      volume, volatility, and indicator inputs used by downstream technical
+      and factor normalization models.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [technicals, ratings, prices, asset]
+
+    columns:
+      - name: desc_ticker
+        data_type: string
+        description: "Stock ticker symbol identifying the publicly traded company."
+
+      - name: dt_session_date
+        data_type: timestamp
+        description: Trading session date derived from the audit load date.
+
+      - name: mnt_previous_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at the close of the previous trading session."
+
+      - name: pct_price_gap
+        description: "Rate price gap between the previous trading day's close and the current day's open."
+        data_type: decimal(10,4)
+
+      - name: mnt_open_price
+        data_type: decimal(10,2)
+        description: "Stock price at market open for the current trading session."
+
+      - name: mnt_high_price
+        data_type: decimal(10,2)
+        description: "Highest stock price reached during the current trading session."
+
+      - name: mnt_low_price
+        data_type: decimal(10,2)
+        description: "Lowest stock price reached during the current trading session."
+
+      - name: mnt_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at market close for the current trading session."
+
+      - name: mnt_after_hours_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at the close of after-hours trading."
+
+      - name: qty_trades
+        data_type: integer
+        description: "Total number of executed trades during the trading session."
+
+      - name: qty_volume
+        data_type: integer
+        description: "Total number of shares volume during the current trading session."
+
+      - name: qty_average_volume
+        data_type: integer
+        description: "Average daily number of shares traded volume during the day, as reported by Finviz."
+
+      - name: rt_relative_volume_ratio
+        data_type: double
+        description: "Rate that expresses the current trading volume relative to the stock's 3-month average trading volume, intraday adjusted."
+
+      - name: qty_after_hours_volume
+        data_type: integer
+        description: "Total number of shares executed during after-hours trading."
+
+      - name: pct_price_change
+        data_type: decimal(10,4)      
+        description: "Rate change in stock price from the previous trading session's close."
+
+      - name: pct_price_change_from_open
+        data_type: decimal(10,4)  
+        description: "Rate change between the current stock price and the market open price."
+
+      - name: pct_after_hours_price_change
+        data_type: decimal(10,4)  
+        description: "Rate change in stock price during after-hours trading. The difference between the regular close price and the after-hours price"
+
+      - name: mnt_52_week_low_price
+        data_type: decimal(10,2)  
+        description: "The stock's 52-week lowest price."
+
+      - name: mnt_52_week_high_price
+        data_type: decimal(10,2)  
+        description: "The stock's 52-week highest price."
+
+      - name: rt_beta_coefficient
+        data_type: double
+        description: "Beta coefficient measuring the stock's volatility relative to the overall market. An asset with a beta of 0 means that its price is not at all correlated with the market. A positive beta means that the asset generally follows the market. A negative beta shows that the asset inversely follows the market, decreases in value if the market goes up."
+
+      - name: rt_average_true_range
+        data_type: double
+        description: "Average True Range (ATR), a technical indicator measuring market volatility. The Average True Range is an exponential moving average (14-days) of the True Ranges. The range of a day's trading is high-low, True Range extends it to yesterday's closing price if it was outside of today's range: True Range = max(high, closeprev) - min(low, closeprev)."
+
+      - name: pct_volatility_week
+        data_type: double
+        description: "Weekly stock price volatility, a statistical measure of the dispersion of returns for a given stock. Represents average weekly high/low trading range. Calculated as the standard deviation of weekly returns and expressed as a rate, it shows the typical weekly price change (up or down)."
+
+      - name: pct_volatility_month
+        data_type: double
+        description: "Monthly stock price volatility, a statistical measure of the dispersion of returns for a given stock. Represents average monthly high/low trading range. Calculated as the standard deviation of monthly returns and expressed as a rate, it shows the typical monthly price change (up or down)."
+
+      - name: pct_20_day_simple_moving_average_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 20-day simple moving average."
+
+      - name: pct_50_day_simple_moving_average_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 50-day simple moving average."
+
+      - name: pct_200_day_simple_moving_average_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 200-day simple moving average."
+
+      - name: rt_relative_strength_index_14
+        data_type: double
+        description: "14-day Relative Strength Index (RSI), a momentum oscillator measuring the speed and magnitude of price movements. The Relative Strength Index (RSI) is a technical analysis oscillator showing price strength by comparing upward and downward close-to-close movements."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+
+
+  - name: int_price_technicals_normalized
+    description: >
+      Intermediate model that combines technical indicators, trend regime logic,
+      capped and shaped signals, and percentile-based normalization to produce
+      standardized technical factor metrics per asset and session date.
+      
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [technicals, ratings, asset]
+
+    columns:
+      - name: desc_ticker
+        data_type: string
+        description: >
+          Stock ticker symbol identifying the publicly traded company.
+
+      - name: dt_session_date
+        data_type: date
+        description: Trading session date for the calculated technical indicators.
+
+      - name: rt_average_true_range
+        data_type: double
+        description: "Average True Range (ATR), a technical indicator measuring market volatility. The Average True Range is an exponential moving average (14-days) of the True Ranges. The range of a day's trading is high-low, True Range extends it to yesterday's closing price if it was outside of today's range: True Range = max(high, closeprev) - min(low, closeprev)."
+
+      - name: pct_volatility_week
+        data_type: double
+        description: "Weekly stock price volatility, a statistical measure of the dispersion of returns for a given stock. Represents average weekly high/low trading range. Calculated as the standard deviation of weekly returns and expressed as a rate, it shows the typical weekly price change (up or down)."
+
+      - name: pct_volatility_month
+        data_type: double
+        description: "Monthly stock price volatility, a statistical measure of the dispersion of returns for a given stock. Represents average monthly high/low trading range. Calculated as the standard deviation of monthly returns and expressed as a rate, it shows the typical monthly price change (up or down)."
+
+      - name: pct_20_day_simple_moving_average_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 20-day simple moving average."
+
+      - name: pct_50_day_simple_moving_average_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 50-day simple moving average."
+
+      - name: pct_200_day_simple_moving_average_distance
+        data_type: double
+        description: "Rate difference between the current stock price and its 200-day simple moving average."
+
+      - name: rt_relative_strength_index_14
+        data_type: double
+        description: "14-day Relative Strength Index (RSI), a momentum oscillator measuring the speed and magnitude of price movements. The Relative Strength Index (RSI) is a technical analysis oscillator showing price strength by comparing upward and downward close-to-close movements."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+
+      - name: rt_moving_average_convergence_divergence_histogram
+        data_type: double
+        description: MACD histogram value representing momentum and trend changes.
+
+      - name: mnt_bollinger_zscore
+        data_type: double
+        description: Bollinger Band z-score indicating price deviation from the band midpoint.
+
+      - name: mnt_simple_moving_average_20
+        data_type: double
+        description: 20-day simple moving average value.
+
+      - name: mnt_simple_moving_average_50
+        data_type: double
+        description: 50-day simple moving average value.
+
+      - name: mnt_simple_moving_average_200
+        data_type: double
+        description: 200-day simple moving average value.
+
+      - name: flag_20_over_50
+        data_type: boolean
+        description: Indicator flag showing whether the 20-day SMA is above the 50-day SMA.
+
+      - name: flag_50_over_200
+        data_type: boolean
+        description: Indicator flag showing whether the 50-day SMA is above the 200-day SMA.
+
+      - name: trend_regime_score
+        data_type: double
+        description: Composite score representing the prevailing trend regime.
+
+      - name: capped_dist_20
+        data_type: double
+        description: Capped and floored 20-day SMA distance used for trend scoring.
+
+      - name: capped_dist_50
+        data_type: double
+        description: Capped and floored 50-day SMA distance used for trend scoring.
+
+      - name: capped_vol_week
+        data_type: double
+        description: Capped weekly volatility used for normalization.
+
+      - name: capped_vol_month
+        data_type: double
+        description: Capped monthly volatility used for normalization.
+
+      - name: shaped_bollinger
+        data_type: double
+        description: Shaped Bollinger Band signal emphasizing mid-band mean reversion.
+
+      - name: shaped_rsi
+        data_type: double
+        description: Shaped RSI signal favoring neutral-to-bullish momentum ranges.
+
+      - name: trend_score_20
+        data_type: double
+        description: Trend score combining regime strength and 20-day SMA distance.
+
+      - name: trend_score_50
+        data_type: double
+        description: Trend score combining regime strength and 50-day SMA distance.
+
+      - name: rt_normalized_20_day_simple_moving_average_distance
+        data_type: double
+        description: Percentile-ranked normalized 20-day SMA trend score (0-1).
+
+      - name: rt_normalized_50_day_simple_moving_average_distance
+        data_type: double
+        description: Percentile-ranked normalized 50-day SMA trend score (0-1).
+
+      - name: rt_normalized_relative_strength_index_14
+        data_type: double
+        description: Percentile-ranked normalized RSI signal (0-1).
+
+      - name: rt_normalized_moving_average_convergence_divergence_histogram
+        data_type: double
+        description: Percentile-ranked normalized MACD histogram signal (0-1).
+
+      - name: rt_normalized_average_true_range
+        data_type: double
+        description: Percentile-ranked normalized Average True Range (0-1).
+
+      - name: rt_normalized_volatility_week
+        data_type: double
+        description: Percentile-ranked normalized weekly volatility (0-1).
+
+      - name: rt_normalized_volatility_month
+        data_type: double
+        description: Percentile-ranked normalized monthly volatility (0-1).
+
+      - name: rt_normalized_bollinger_zscore
+        data_type: double
+        description: Percentile-ranked normalized Bollinger Band z-score signal (0-1).

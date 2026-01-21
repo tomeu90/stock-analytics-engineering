@@ -1,0 +1,166 @@
+version: 2
+
+models:
+  - name: fct_news_sentiment
+    description: >
+      Fact table containing market news and blog articles aggregated at the
+      article level. The dataset is enriched with sentiment analysis scores
+      computed using the VADER algorithm on text extracted from the article HTML.
+      This table provides a unified, analysis-ready view of news content, sentiment,
+      publication metadata, and market-related context for downstream analytics,
+      monitoring, and modeling use cases.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [market, asset, news, scores]
+
+    columns:
+      - name: sk_news_article
+        data_type: string
+        description: >
+          Unique identifier for the news article across all source systems.
+          Used to deduplicate and track articles in downstream models.
+        tests:
+          - not_null
+          - unique
+
+      - name: desc_news_title
+        data_type: string
+        description: >
+          Headline or title of the news article as published by the source.
+        tests:
+          - not_null
+
+      - name: desc_news_source
+        data_type: string
+        description: >
+          Name of the originating publisher or platform (e.g., asset news
+          provider, market news outlet, or blog).
+        tests:
+          - not_null
+
+      - name: dt_news_posting
+        data_type: timestamp
+        description: >
+          Name of the originating publisher or platform (e.g., asset news
+          provider, market news outlet, or blog).
+        tests:
+          - not_null
+
+      - name: desc_news_url
+        data_type: string
+        description: >
+          Canonical URL linking to the full news article.
+        tests:
+          - not_null
+          - unique
+          
+      - name: desc_news_category
+        data_type: string
+        description: >
+          High-level category or topic assigned to the news article by the
+          source or derived during ingestion (e.g., Stock, Market, Blog).
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["Stock", "Market", "Blog"]
+
+      - name: desc_news_related_tickers
+        data_type: string
+        description: >
+          List of related asset tickers or symbols mentioned in the article,
+          typically derived from source metadata or entity extraction.
+        tests:
+          - not_null
+
+      - name: rt_negative_sentiment_score
+        data_type: double
+        description: >
+          VADER negative sentiment score representing the proportion of the article
+          text classified as negative. Value ranges from 0.0 to 1.0.
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_neutral_sentiment_score
+        data_type: double
+        description: >
+          VADER neutral sentiment score representing the proportion of the article
+          text classified as neutral. Value ranges from 0.0 to 1.0.
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_positive_sentiment_score
+        data_type: double
+        description: >
+          VADER positive sentiment score representing the proportion of the article
+          text classified as positive. Value ranges from 0.0 to 1.0.
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_compound_sentiment_score
+        data_type: double
+        description: >
+          Normalized, weighted VADER compound sentiment score summarizing the overall
+          sentiment polarity of the article. Value ranges from -1.0 (most negative)
+          to 1.0 (most positive).
+        tests:
+          - not_null
+
+      - name: desc_sentiment_score
+        data_type: string
+        description: >
+          Categorical sentiment classification derived from the VADER compound score.
+          Values are assigned as Negative (compound < -0.05), Neutral (between -0.05 and 0.05),
+          or Positive (compound > 0.05).
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["Positive", "Neutral", "Negative"]
+
+      - name: rt_sentiment_score_certainty
+        data_type: double
+        description: >
+          Derived confidence metric indicating sentiment strength, calculated as the
+          absolute compound score weighted by the inverse of the neutral sentiment score.
+          Higher values indicate stronger and more confident sentiment polarity.
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: audit_fetch_status
+        data_type: string
+        description: >
+          Status indicating whether article content was successfully fetched and
+          considered valid for sentiment analysis. Set to Success when text is present
+          and exceeds the minimum length threshold; otherwise set to Failed.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["Success", "Failed"]
+
+      - name: audit_fetched_at
+        data_type: timestamp
+        description: >
+          Timestamp indicating when the article content was fetched and processed
+          during the ETL execution.
+        tests:
+          - not_null
+
+      - name: audit_loaded_at
+        data_type: integer
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "Timestamp indicating when the record was created."
+        tests:
+          - not_null

@@ -1,0 +1,134 @@
+version: 2
+
+models:
+  - name: int_asset_valuation_normalized
+    description: >
+      Intermediate model that normalizes valuation and analyst metrics within
+      industry groups. Metrics are scaled relative to industry minimums and
+      maximums to enable cross-asset comparability.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [valuation, ratings, asset]
+
+    columns:
+      - name: desc_ticker
+        data_type: string
+        description: >
+          Stock ticker symbol identifying the publicly traded company.
+
+      - name: desc_industry
+        data_type: string
+        description: "Industry classification within the broader sector."
+
+      - name: mnt_market_capitalization
+        data_type: bigint
+        description: "Total market capitalization of the company, expressed in USD. Equals the total value of all outstanding company's shares."
+
+      - name: rt_price_earnings_ratio
+        data_type: double
+        description: "Trailing price-to-earnings (P/E) valuation ratio based on earnings from the last twelve months (TTM). It compares the company's share price to its earnings per share."
+
+      - name: rt_forward_price_earnings_ratio
+        data_type: double
+        description: "Forward-looking price-to-earnings (P/E) valuation ratio based on estimated future earnings for the next fiscal year. It compares the company's current share price to its next fiscal year estimated earnings per share."
+
+      - name: rt_price_earnings_growth_ratio
+        data_type: double
+        description: "Price/Earnings-to-Growth (PEG) valuation ratio, incorporating expected earnings growth. It compares the company's share price to its expected earnings growth."
+
+      - name: rt_price_sales_ratio
+        data_type: double
+        description: "Price-to-sales (P/S) valuation ratio, comparing the company's market value to its revenue. It is calculated by dividing the current company's share price by the sales per share in dollars."
+
+      - name: rt_price_book_ratio
+        data_type: double
+        description: "Price-to-book (P/B) ratio, comparing market value to book value of equity. It is calculated by dividing the current company's share price by the latest quarter's book value per share."
+
+      - name: rt_price_cash_ratio
+        data_type: double
+        description: "Price-to-cash ratio, measuring market value relative to cash assets. It is calculated by dividing the current company's share price by the latest quarter's cash per share."
+
+      - name: rt_price_free_cash_flow_ratio
+        data_type: double
+        description: "Price-to-free-cash-flow ratio, comparing market value to it's level of annual free cash flow."
+
+      - name: rt_book_shares
+        data_type: double
+        description: "Book value per share."
+
+      - name: mnt_enterprise_value
+        data_type: bigint
+        description: "Enterprise value (EV), representing total company value including market capitalization, debt, and cash."
+
+      - name: rt_enterprise_value_ebitda_ratio
+        data_type: double
+        description: "Enterprise value to EBITDA (EV/EBITDA) ratio, a valuation multiple comparing firm value to operating earnings. Total value of a company, including debt and excluding cash divided by Earnings Before Interest, Taxes, Depreciation, and Amortization (ttm)."
+
+      - name: rt_enterprise_value_sales_ratio
+        data_type: double
+        description: "Enterprise value to sales (EV/Sales) ratio, comparing firm value to total revenue. Total value of a company, including debt and excluding cash divided by Revenue (ttm)."
+
+      - name: cod_analyst_recommendation
+        data_type: double
+        description: "Consensus analyst recommendation score, typically ranging from strong buy (1) to strong sell (5)."
+
+      - name: rt_normalized_market_capitalization
+        data_type: float
+        description: Industry-normalized market capitalization score (0-1).
+
+      - name: rt_normalized_price_earnings_ratio
+        data_type: float
+        description: Industry-normalized price-to-earnings score (0-1).
+
+      - name: rt_normalized_forward_price_earnings_ratio
+        data_type: float
+        description: Industry-normalized forward price-to-earnings score (0-1).
+
+      - name: rt_normalized_price_earnings_growth_ratio
+        data_type: float
+        description: Industry-normalized PEG ratio score (0-1).
+
+      - name: rt_normalized_price_sales_ratio
+        data_type: float
+        description: Industry-normalized price-to-sales score (0-1).
+
+      - name: rt_normalized_price_book_ratio
+        data_type: float
+        description: Industry-normalized price-to-book score (0-1).
+
+      - name: rt_normalized_price_cash_ratio
+        data_type: float
+        description: Industry-normalized price-to-cash score (0-1).
+
+      - name: rt_normalized_price_free_cash_flow_ratio
+        data_type: float
+        description: Industry-normalized price-to-free-cash-flow score (0-1).
+
+      - name: rt_normalized_enterprise_value_ebitda_ratio
+        data_type: float
+        description: Industry-normalized EV/EBITDA score (0-1).
+
+      - name: rt_normalized_enterprise_value_sales_ratio
+        data_type: float
+        description: Industry-normalized EV/sales score (0-1).
+
+      - name: rt_normalized_analyst_recommendation
+        data_type: float
+        description: Industry-normalized analyst recommendation score (0-1).
+
+      - name: mnt_target_price
+        data_type: decimal(10,2)
+        description: "Consensus analyst mean target price for the stock."
+
+      - name: mnt_close_price
+        data_type: decimal(10,2)
+        description: "Stock price at market close for the current trading session."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."

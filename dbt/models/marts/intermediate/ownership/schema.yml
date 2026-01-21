@@ -1,0 +1,100 @@
+models:
+  - name: int_asset_ownership_normalized
+    description: >
+      Intermediate model that normalizes asset ownership, short interest,
+      float, and volume-related metrics using percentile ranks and applies
+      gating logic for downstream scoring and analysis.
+      
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [ownership, ratings, asset]
+
+    columns:
+      - name: desc_ticker
+        data_type: string
+        description: >
+          Stock ticker symbol identifying the publicly traded company.
+
+      - name: qty_outstanding_shares
+        data_type: bigint
+        description: "Total number of shares outstanding, issued by a corporation and held by its shareholders, as reported by Finviz. Expressed in millions."
+
+      - name: qty_float_shares
+        data_type: bigint
+        description: "Number of shares available for public trading, excluding restricted and insider-held shares. Expressed in millions."
+
+      - name: pct_float_shares
+        data_type: double
+        description: "Rate of total shares outstanding that are part of the public float for trading."
+
+      - name: pct_insider_ownership
+        data_type: double
+        description: "Rate of company shares owned by it's own management, such as executives and directors."
+
+      - name: pct_insider_transactions
+        data_type: double
+        description: "Recent insider trading activity, indicating net buying or selling by company insiders. Value represents 6-month rate change in total insider ownership."
+
+      - name: pct_institutional_ownership
+        data_type: double
+        description: "Rate of company shares owned by institutional investors."
+
+      - name: pct_institutional_transactions
+        data_type: double
+        description: "Recent changes in institutional ownership, indicating net accumulation or distribution. Value represents 3-month rate change in institutional ownership."
+
+      - name: flag_shortable_asset
+        data_type: boolean
+        description: "Indicates whether shares are currently available to be sold short."
+
+      - name: pct_short_interest_rate
+        data_type: double
+        description: "Total number of shares that are currently sold short. Short Interest = Shares sold short / Shares available for trading (float). A high short interest indicates that many investors are bearish about the stock price."
+
+      - name: pct_short_float_shares
+        data_type: double
+        description: "Rate of the public float that is currently sold short."
+
+      - name: rt_short_ratio
+        data_type: double
+        description: "Short interest ratio (days to cover), calculated as short interest divided by average daily trading volume."
+
+      - name: flag_optionable_asset
+        data_type: boolean
+        description: "Indicates whether the stock has listed options available for trading."
+
+      - name: rt_relative_volume_ratio
+        data_type: double
+        description: "Rate that expresses the current trading volume relative to the stock's 3-month average trading volume, intraday adjusted."
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "Batch or system date (YYYYMMDD formated as integer) indicating when the record was loaded into the data warehouse."
+
+      - name: rt_normalized_short_interest_rate
+        data_type: double
+        description: Percentile-ranked normalization of short interest rate (0-1).
+
+      - name: rt_normalized_short_ratio
+        data_type: double
+        description: Percentile-ranked normalization of short ratio (0-1).
+
+      - name: rt_normalized_float_shares
+        data_type: double
+        description: Percentile-ranked normalization of float shares (inverted so lower float ranks higher).
+
+      - name: rt_normalized_relative_volume_ratio
+        data_type: double
+        description: Percentile-ranked normalization of relative volume ratio (0-1).
+
+      - name: rt_gate_short_interest_rate
+        data_type: double
+        description: Gating factor applied based on short interest rate thresholds.
+
+      - name: rt_gate_relative_volume_ratio
+        data_type: double
+        description: Gating factor applied based on relative volume ratio thresholds.

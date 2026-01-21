@@ -1,0 +1,127 @@
+version: 2
+
+models:
+  - name: fct_asset_valuation
+    description: >
+      Fact table capturing asset valuation multiples, market capitalization,
+      analyst sentiment, and price target comparisons. This model supports
+      relative valuation analysis, expectation-driven positioning, and
+      alignment between market pricing and analyst outlook.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [asset, fact, valuation]
+
+    tests:
+      - grain_unique:
+          columns: ['sk_asset_ticker', 'audit_loaded_at']
+
+    columns:
+      - name: sk_asset_ticker
+        data_type: string
+        description: "{{ doc('column_sk_asset_ticker') }}"
+        tests:
+          - not_null
+
+      - name: mnt_market_capitalization
+        data_type: bigint
+        description: >
+          Total market capitalization of the company, expressed in USD. Equals the 
+          total value of all outstanding company's shares.
+
+      - name: rt_price_earnings_ratio
+        data_type: double
+        description: >
+          Trailing price-to-earnings (P/E) ratio. Measures how much investors
+          are willing to pay for one unit of historical earnings.
+
+      - name: rt_forward_price_earnings_ratio
+        data_type: double
+        description: >
+          Forward-looking P/E ratio based on projected earnings.
+          Reflects market expectations of future profitability.
+
+      - name: rt_price_earnings_growth_ratio
+        data_type: double
+        description: >
+          Price/Earnings-to-Growth (PEG) ratio, adjusting valuation for
+          expected earnings growth. Lower values may indicate undervaluation
+          relative to growth expectations.
+
+      - name: rt_price_sales_ratio
+        data_type: double
+        description: >
+          Price-to-sales ratio, comparing market capitalization to total revenue.
+          Commonly used for valuing unprofitable or early-stage companies.
+
+      - name: rt_price_book_ratio
+        data_type: double
+        description: >
+          Price-to-book ratio, comparing market value to accounting book value.
+          Often used to assess valuation in asset-heavy industries.
+
+      - name: rt_price_cash_ratio
+        data_type: double
+        description: >
+          Price-to-cash ratio, measuring market value relative to cash holdings.
+          Lower values may indicate balance sheet strength or undervaluation.
+
+      - name: rt_price_free_cash_flow_ratio
+        data_type: double
+        description: >
+          Price-to-free-cash-flow ratio, reflecting how efficiently the market
+          prices a company's ability to generate discretionary cash.
+
+      - name: rt_enterprise_value_ebitda_ratio
+        data_type: double
+        description: >
+          Enterprise value to EBITDA ratio, commonly used for cross-company
+          valuation by neutralizing capital structure differences.
+
+      - name: rt_enterprise_value_sales_ratio
+        data_type: double
+        description: >
+          Enterprise value to sales ratio, providing a capital-structure-neutral
+          view of valuation relative to revenue.
+
+      - name: cod_analyst_recommendation
+        data_type: double
+        description: >
+          Numeric consensus analyst recommendation score, typically ranging
+          from 1 (most bullish) to 5 (most bearish).
+
+      - name: desc_analyst_recommendation
+        data_type: string
+        description: >
+          Categorical interpretation of the analyst consensus recommendation:
+          Strong Buy (1), Buy (2), Hold (3), Sell (4), Strong Sell (5).
+          Indicates overall analyst sentiment toward the asset.
+
+      - name: mnt_target_price
+        data_type: double
+        description: >
+          Consensus analyst price target representing expected future price
+          based on analyst forecasts.
+
+      - name: flag_price_below_target
+        data_type: boolean
+        description: >
+          Indicates whether the current price is below the analyst target price.
+          True suggests implied upside based on analyst expectations; false
+          suggests limited or negative expected return.
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "{{ doc('column_audit_loaded_at') }}"
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "{{ doc('column_audit_created_at') }}"
+        tests:
+          - not_null

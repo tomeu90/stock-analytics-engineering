@@ -1,0 +1,153 @@
+version: 2
+
+models:
+  - name: fct_asset_technicals
+    description: >
+      Fact table containing core technical analysis indicators including volatility,
+      trend-following signals, momentum oscillators, and price envelope bands.
+      Designed to support short- to medium-term trading decisions, regime detection,
+      and confirmation of momentum and reversal signals.
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [asset, fact, technicals]
+
+    tests:
+      - grain_unique:
+          columns: ['sk_asset_ticker', 'audit_loaded_at']
+
+    columns:
+      - name: sk_asset_ticker
+        data_type: string
+        description: "{{ doc('column_sk_asset_ticker') }}"
+        tests:
+          - not_null
+
+      - name: dt_session_date
+        data_type: timestamp
+        description: Trading session date derived from the audit load date.
+
+      - name: rt_average_true_range
+        data_type: double
+        description: >
+          Average True Range (ATR), measuring absolute price volatility.
+          Higher values indicate increased price movement and risk, while
+          lower values indicate consolidation or low-volatility regimes.
+
+      - name: pct_volatility_week
+        data_type: double
+        description: >
+          Weekly realized volatility expressed as a percentage.
+          Reflects short-term price variability over recent trading sessions.
+
+      - name: pct_volatility_month
+        data_type: double
+        description: >
+          Monthly realized volatility expressed as a percentage.
+          Captures medium-term volatility trends and regime shifts.
+
+      - name: mnt_simple_moving_average_20
+        data_type: double
+        description: >
+          20-day simple moving average (SMA), commonly used to represent
+          short-term trend direction and dynamic support or resistance.
+
+      - name: pct_20_day_simple_moving_average_distance
+        data_type: double
+        description: >
+          Percentage distance between the current price and the 20-day SMA.
+          Positive values indicate price above the short-term trend;
+          negative values indicate price below it.
+
+      - name: mnt_simple_moving_average_50
+        data_type: double
+        description: >
+          50-day simple moving average, representing the intermediate-term trend
+          and widely used by swing traders and institutional participants.
+
+      - name: pct_50_day_simple_moving_average_distance
+        data_type: double
+        description: >
+          Percentage distance between the current price and the 50-day SMA.
+          Helps identify trend strength, pullbacks, and potential trend reversals.
+
+      - name: mnt_simple_moving_average_200
+        data_type: double
+        description: >
+          200-day simple moving average, representing the long-term trend.
+          Commonly used to distinguish bullish versus bearish market regimes.
+
+      - name: pct_200_day_simple_moving_average_distance
+        data_type: double
+        description: >
+          Percentage distance between the current price and the 200-day SMA.
+          Sustained positive values indicate long-term uptrends; sustained
+          negative values indicate long-term downtrends.
+
+      - name: rt_relative_strength_index_14
+        data_type: double
+        description: >
+          14-period Relative Strength Index (RSI), a momentum oscillator ranging
+          from 0 to 100. Values above 70 typically indicate overbought conditions,
+          while values below 30 indicate oversold conditions.
+
+      - name: rt_moving_average_convergence_divergence_line
+        data_type: double
+        description: >
+          MACD line, calculated as the difference between short-term and long-term
+          exponential moving averages. Used to assess momentum direction. For this
+          purpose, we used simple moving averages to simplify the transformation logic.
+
+      - name: rt_moving_average_convergence_divergence_signal
+        data_type: double
+        description: >
+          MACD signal line, an exponential moving average of the MACD line.
+          Crossovers between the MACD line and signal line generate momentum signals.
+
+      - name: rt_moving_average_convergence_divergence_histogram
+        data_type: double
+        description: >
+          MACD histogram representing the difference between the MACD line
+          and its signal line. Expanding values indicate strengthening momentum,
+          while contracting values indicate weakening momentum.
+
+      - name: mnt_bollinger_lower_band_20
+        data_type: double
+        description: >
+          Lower Bollinger Band based on a 20-period moving average.
+          Represents a dynamic lower price boundary adjusted for volatility.
+
+      - name: mnt_bollinger_mid_band_20
+        data_type: double
+        description: >
+          Middle Bollinger Band, equal to the 20-period simple moving average.
+          Acts as a trend reference and mean-reversion anchor.
+
+      - name: mnt_bollinger_upper_band_20
+        data_type: double
+        description: >
+          Upper Bollinger Band based on a 20-period moving average.
+          Represents a dynamic upper price boundary adjusted for volatility.
+
+      - name: mnt_bollinger_zscore
+        data_type: double
+        description: >
+          Standardized z-score indicating how many standard deviations
+          the current price is from the Bollinger mid-band.
+          High absolute values indicate potential overextension or breakout conditions.
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "{{ doc('column_audit_loaded_at') }}"
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "{{ doc('column_audit_created_at') }}"
+        tests:
+          - not_null

@@ -1,0 +1,93 @@
+version: 2
+
+models:
+  - name: fct_asset_ratings
+    description: "{{ doc('fct_asset_ratings') }}"
+
+    config:
+
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+      tags: [asset, fact, ratings]
+
+    tests:
+      - grain_unique:
+          columns: ['sk_asset_ticker', 'audit_loaded_at']
+
+    columns:
+      - name: sk_asset_ticker
+        description: "{{ doc('column_sk_asset_ticker') }}"
+        tests:
+          - not_null
+
+      - name: rt_value_strength_score
+        data_type: double
+        description: "{{ doc('metric_value_strength_score') }}"
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_technical_strength_score
+        data_type: double
+        description: "{{ doc('metric_technical_strength_score') }}"
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_short_squeeze_score
+        data_type: double
+        description: "{{ doc('metric_short_squeeze_score') }}"
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_short_squeeze_momentum_score
+        data_type: double
+        description: "{{ doc('metric_short_squeeze_momentum_score') }}"
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_fundamental_strength_score
+        data_type: double
+        description: "{{ doc('metric_fundamental_strength_score') }}"
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_momentum_strength_score
+        data_type: double
+        description: "{{ doc('metric_momentum_strength_score') }}"
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: rt_sentiment_strength_score
+        data_type: double
+        description: "{{ doc('metric_sentiment_strength_score') }}"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "between -1 and 1"
+
+      - name: rt_overall_score
+        data_type: double
+        description: "{{ doc('metric_overall_strength_score') }}"
+        tests:
+          - not_null
+          - normalized_range
+
+      - name: audit_loaded_at
+        data_type: int
+        description: "{{ doc('column_audit_loaded_at') }}"
+        tests:
+          - not_null
+
+      - name: audit_created_at
+        data_type: timestamp
+        description: "{{ doc('column_audit_created_at') }}"
+        tests:
+          - not_null
