@@ -30,7 +30,7 @@ The final output is an interactive Power BI dashboard that provides actionable i
 ### Data Pipeline
 
 ```
-Finviz API → Databricks (Extraction) → dbt (Transform Stage 1)→ Databricks (Sentiment Analysis) → dbt (Transform Stage 2) → Power BI
+Finviz API → Databricks (Extract) → dbt (Transform Stage 1)→ Databricks (Sentiment score) → dbt (Transform Stage 2) → Power BI
 ```
 
 ![Pipeline](https://i.ibb.co/TyjxyRy/preview.webp)
