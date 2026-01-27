@@ -1,6 +1,5 @@
 # Stock Analytics Engineering - Multi-Factor Model 
 
-**⚠️ Work In Progress...**  
 An end-to-end analytics engineering project that models financial data and builds a comprehensive stock scoring system by combining fundamental analysis, technical indicators, valuation metrics, momentum signals, and sentiment analysis from financial news.
 
 ## 📊 Project Overview
@@ -15,7 +14,7 @@ This project implements a multi-factor investment model that ranks stocks based 
 
 The final output is an interactive Power BI dashboard that provides actionable investment insights.
 
-![Dashboard Preview](path/to/dashboard.gif)
+![Dashboard Preview](https://i.ibb.co/rG3Zpgbk/Dashboard.gif)
 
 ## 🏗️ Architecture
 
@@ -31,16 +30,19 @@ The final output is an interactive Power BI dashboard that provides actionable i
 ### Data Pipeline
 
 ```
-Finviz API → Databricks (Extract) → dbt (Transform Stage 1) → Databricks (Sentiment Analysis) → dbt (Transform Stage 2) → Power BI
+Finviz API → Databricks (Extraction) → dbt (Transform Stage 1)
+→ Databricks (Sentiment Analysis) → dbt (Transform Stage 2) → Power BI
 ```
 
-![Pipeline](path/to/dashboard.gif)
+![Pipeline](https://i.ibb.co/TyjxyRy/preview.webp)
 
 ## 🔄 Pipeline Workflow
 
 ### 1. Data Extraction (Databricks)
-- Notebooks fetch stock data and news from Finviz API
+- Notebooks fetch stock data and news from API
 - Raw data stored in staging tables: `news_data` and `screener_data`
+
+![Sources](https://i.ibb.co/RkZjHjTb/Src.png)
 
 ### 2. Initial Transformation (dbt)
 ```bash
@@ -48,6 +50,8 @@ dbt build -s +int_news_union
 ```
 - Processes raw news data
 - Creates an intermediate union table for sentiment analysis by joining stock-related news from `screener_data` with market and blog news from the `news_data` source.
+
+![dbt_Stage_1](https://i.ibb.co/s9htyn64/Captura-de-pantalla-2026-01-27-080958.png)
 
 ### 3. Sentiment Analysis (Databricks)
 - Spark SQL notebook processes `int_news_union`
@@ -63,7 +67,7 @@ dbt build --exclude +int_news_union
 - Generates final mart and dimension tables with composite scores
 - Outputs an asset recommendation ranking based on multiple categories
 
-![Data Modeling](path/to/dashboard.gif)
+![Data Modeling](https://i.ibb.co/xVcsjds/model.png)
 
 ### 5. Visualization (Power BI)
 - Interactive dashboard displaying:
@@ -84,15 +88,14 @@ stock-analytics-engineering/
 │   |   └── tables.sql                                # Table creation and schema definitions
 |   └── src/                                          # Source data ingestion layer
 |       ├── news/                                     # News data sources
-|       │   └── src_finviz_raw_news_data.ipynb        # Raw news data extraction from Finviz
+|       │   └── src_finviz_raw_news_data.ipynb        # Raw news data extraction 
 |       └── screener/                                 # Stock screener data sources
-|           └── src_finviz_raw_screener_data.ipynb    # Raw screener data extraction from Finviz
+|           └── src_finviz_raw_screener_data.ipynb    # Raw screener data extraction 
 |
 ├── dbt/                                              # dbt transformation models
 |   ├── dbt_project.yml                               # Main dbt project configuration
 |   ├── package-lock.yml                              # dbt package lock file
 |   ├── packages.yml                                  # dbt package dependencies
-|   ├── README.md                                     # dbt project documentation
 |   ├── analyses/                                     # Ad-hoc analytical queries
 |   ├── docs/                                         # Project documentation
 |   │   ├── columns/                                  # Column-level documentation
@@ -110,18 +113,18 @@ stock-analytics-engineering/
 |   │   │   │   ├── technicals/                       # Technical indicators
 |   │   │   │   └── valuation/                        # Valuation metrics
 |   │   │   ├── dim_*.sql                             # Dimension tables
-│   |   │   ├── dim_*.yml
+│   |   │   ├── dim_*.yml                             # Dimension tables definitions
 │   |   │   ├── fct_*.sql                             # Fact tables
-│   │   |   └── fct_*.yml
+│   │   |   └── fct_*.yml                             # Fact tables definitions
 |   │   └── staging/                                  # Staging models (Silver layer)
 |   │       ├── finviz/                               # Finviz source staging
 |   │       └── sources.yml                           # Source table definitions
 |   ├── seeds/                                        # Static reference data (CSV files)
-|   │   ├── schema.yml
+|   │   ├── schema.yml                                # Seeds definitions
 |   │   └── source_domains.csv                        # News source domain mappings
 |   ├── snapshots/                                    # Slowly changing dimensions (SCD Type 2)
 |   │   ├── asset_identity_snapshot.sql               # Asset identity historical tracking
-|   │   └── schema.yml
+|   │   └── schema.yml                                # Snapshot definitions
 |   └── tests/                                        # Data quality tests
 |       ├── generic/                                  # Reusable generic tests
 |       │   ├── grain_unique.sql                      # Test for unique grain
@@ -140,14 +143,19 @@ The scoring system evaluates stocks across four key dimensions:
 ### 1. **Fundamental Score**
 - Revenue growth
 - Earnings quality
-- Profit margins
-- Return on equity (ROE)
+- Profit margins, Gross margins, Operating margins
+- Return on equity (ROE), Return on Assets (ROA), Return on Invested Capital (ROIC)
+- Current ratio, Quick ratio, Debt equity ratio 
 
 ### 2. **Valuation Score**
 - P/E ratio
 - P/B ratio
 - PEG ratio
 - Price/Sales ratio
+- Price/Cash ratio
+- P/FCF ratio
+- Enterprise Value
+- EBITDA
 
 ### 3. **Momentum Score**
 - Price trends (YTD, 6M, 3M performance)
@@ -157,10 +165,17 @@ The scoring system evaluates stocks across four key dimensions:
 ### 4. **Sentiment Score**
 - News sentiment analysis using VADER
 - Aggregated sentiment from recent news articles
-- Weighted by recency and source quality
+
+### 5. **Technical Score**
+- Simple Moving Averages
+- Relative Strength Index
+- Moving Averages Convergence-Divergence
+- Average True Range
+- Volatility
+- Bollinger Bands
 
 ### Overall Score
-A weighted composite of all four factors, providing a holistic view of investment opportunities.
+A weighted composite of all five factors, providing a holistic view of investment opportunities.
 
 ## 📊 Key Features
 
@@ -189,18 +204,26 @@ The dbt project follows best practices:
 
 ### Key Models
 
-- `stg_raw_news`: Staged news data from Finviz
-- `stg_raw_screener`: Staged stock screener data
-- `int_news_union`: Unified news dataset for sentiment analysis
-- `int_news_scores`: News with sentiment scores
-- `fct_stock_scores`: Final fact table with all scores
-- `dim_analyst_recommendations`: Analyst recommendation dimension
+- `stg_finviz__market_news`: Staged news data
+- `stg_finviz__asset_attributes`: Staged stock screener data
+- `stg_finviz__news_scores`: News with sentiment scores
+- `dim_asset_identity`: Core asset reference data (ticker, name, exchange, identifiers) sourced from active rows in the `asset_identity_snapshot`
+- `dim_dates`: Calendar dimension for time-based analysis
+- `fct_asset_daily_prices`: Daily OHLCV price data for assets
+- `fct_asset_dividends`: Dividend events and cash distributions per asset
+- `fct_asset_fundamentals`: Fundamental financial metrics (earnings, ratios, balance sheet items)
+- `fct_asset_ownership`: Asset ownership, institutional holding data and potential *short-squeeze* score
+- `fct_asset_performance`: Derived performance metrics (returns, volatility, benchmarks)
+- `fct_asset_ratings`: Scores from different categories of the multi-factor model
+- `fct_asset_technicals`: Technical indicators (moving averages, RSI, MACD, etc.)
+- `fct_asset_valuation`: Valuation metrics (P/E, P/B, intrinsic value estimates)
+- `fct_news_sentiment`: News articles with associated sentiment scores linked to assets
 
 ## 🔍 DAG Visualization
 
 The project includes comprehensive data lineage tracking through dbt's DAG:
 
-![dbt DAG](path/to/dag_image.png)
+![dbt DAG](https://i.ibb.co/TBPkX0C7/Captura-de-pantalla-2026-01-27-085816-2.png)
 
 This shows the complete flow from raw data sources through intermediate transformations to final mart tables.
 
@@ -211,16 +234,6 @@ This is a portfolio project, but suggestions and feedback are welcome! Feel free
 ## 📫 Contact
 
 **Tomeu** - [GitHub](https://github.com/tomeu90)
-
-Project Link: [https://github.com/tomeu90/stock-analytics-engineering](https://github.com/tomeu90/stock-analytics-engineering)
-
-## 📜 License
-
-This project is open source and available under the MIT License.
-
----
-
-*Built with ❤️ for analytics engineering excellence*
 
 
 
