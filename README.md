@@ -66,7 +66,7 @@ dbt build --exclude +int_news_union
 - Generates final mart and dimension tables with composite scores
 - Outputs an asset recommendation ranking based on multiple categories
 
-![Data Modeling](https://i.ibb.co/xVcsjds/model.png)
+![Data Modeling](https://i.ibb.co/hx21Q5CP/model.png)
 
 ### 5. Visualization (Power BI)
 - Interactive dashboard displaying:
