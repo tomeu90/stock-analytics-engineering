@@ -14,7 +14,7 @@ This project implements a multi-factor investment model that ranks stocks based 
 
 The final output is an interactive Power BI dashboard that provides actionable investment insights.
 
-![Dashboard Preview](https://i.ibb.co/rG3Zpgbk/Dashboard.gif)
+![Dashboard Preview](https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExamJvYXp1aTlpYTNjYnF3NW9tcXlxa3puZzhqcjBicHliZ2hpb3p2eiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3wwUhzX474lDjYPsEy/giphy.gif)
 
 ## 🏗️ Architecture
 
@@ -30,8 +30,7 @@ The final output is an interactive Power BI dashboard that provides actionable i
 ### Data Pipeline
 
 ```
-Finviz API → Databricks (Extraction) → dbt (Transform Stage 1)
-→ Databricks (Sentiment Analysis) → dbt (Transform Stage 2) → Power BI
+Finviz API → Databricks (Extraction) → dbt (Transform Stage 1)→ Databricks (Sentiment Analysis) → dbt (Transform Stage 2) → Power BI
 ```
 
 ![Pipeline](https://i.ibb.co/TyjxyRy/preview.webp)
@@ -207,7 +206,7 @@ The dbt project follows best practices:
 - `stg_finviz__market_news`: Staged news data
 - `stg_finviz__asset_attributes`: Staged stock screener data
 - `stg_finviz__news_scores`: News with sentiment scores
-- `dim_asset_identity`: Core asset reference data (ticker, name, exchange, identifiers) sourced from active rows in the `asset_identity_snapshot`
+- `dim_asset_identity`: Core asset reference data sourced from active rows in the `asset_identity_snapshot`
 - `dim_dates`: Calendar dimension for time-based analysis
 - `fct_asset_daily_prices`: Daily OHLCV price data for assets
 - `fct_asset_dividends`: Dividend events and cash distributions per asset
